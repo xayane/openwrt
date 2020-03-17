@@ -12,6 +12,8 @@ end)
 local fs  = require "nixio.fs"
 local sys = require "luci.sys"
 
+local ucic = luci.model.uci.cursor()
+
 m = Map(shadowsocksr,  translate("Servers subscription and manage"))
 
 -- Server Subscribe
@@ -55,23 +57,20 @@ o = s:option(Button,"subscribe", translate("Update All Subscribe Severs"))
 o.rawhtml  = true
 o.template = "shadowsocksr/subscribe"
 
-
--- o.inputstyle = "apply"
--- o.write = function()
--- luci.sys.call("lua /root/subscribe.lua  >>/tmp/ssrplus.log 2>&1")
--- -- luci.sys.call("echo 123  >>/tmp/ssrplus.log 2>&1")
--- -- luci.sys.exec("bash /usr/share/shadowsocksr/subscribe.sh >>/tmp/ssrplus.log 2>&1")
--- luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shadowsocksr", "servers"))
--- end
-
-
-o = s:option(Button,"delete",translate("Delete all severs"))
+o = s:option(Button,"delete",translate("Delete All Subscribe Severs"))
 o.inputstyle = "reset"
 o.description = string.format(translate("Server Count") ..  ": %d", server_count)
 o.write = function()
-uci:delete_all("shadowsocksr", "servers", function(s) return true end)
-uci:save("shadowsocksr")
-luci.sys.call("uci commit shadowsocksr && /etc/init.d/shadowsocksr stop")
+uci:delete_all("shadowsocksr", "servers", function(s)
+  if s.hashkey or s.isSubscribe then
+    return true
+  else
+    return false
+  end
+end)
+uci:save("shadowsocksr") 
+uci:commit("shadowsocksr")
+luci.sys.exec("/etc/init.d/shadowsocksr restart")
 luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shadowsocksr", "servers"))
 return
 end
@@ -80,7 +79,6 @@ end
 s = m:section(TypedSection, "servers")
 s.anonymous = true
 s.addremove = true
-s.sortable = false
 s.template = "cbi/tblsection"
 s.sortable = true
 s.extedit = luci.dispatcher.build_url("admin/services/shadowsocksr/servers/%s")
@@ -94,7 +92,7 @@ end
 
 o = s:option(DummyValue, "type", translate("Type"))
 function o.cfgvalue(...)
-	return Value.cfgvalue(...) or translate("")
+	return Value.cfgvalue(...) or ""
 end
 
 o = s:option(DummyValue, "alias", translate("Alias"))
@@ -102,28 +100,9 @@ function o.cfgvalue(...)
 	return Value.cfgvalue(...) or translate("None")
 end
 
-o = s:option(DummyValue, "server", translate("Server Address"))
-function o.cfgvalue(...)
-	return Value.cfgvalue(...) or "?"
-end
-
 o = s:option(DummyValue, "server_port", translate("Server Port"))
 function o.cfgvalue(...)
-	return Value.cfgvalue(...) or "?"
-end
-
-if nixio.fs.access("/usr/bin/kcptun-client") then
-
-o = s:option(DummyValue, "kcp_enable", translate("KcpTun"))
-function o.cfgvalue(...)
-	return Value.cfgvalue(...) or "?"
-end
-
-end
-
-o = s:option(DummyValue, "switch_enable", translate("Auto Switch"))
-function o.cfgvalue(...)
-	return Value.cfgvalue(...) or "1"
+	return Value.cfgvalue(...) or "N/A"
 end
 
 o = s:option(DummyValue, "server_port", translate("Socket Connected"))
@@ -133,6 +112,23 @@ o.width="10%"
 o = s:option(DummyValue, "server", translate("Ping Latency"))
 o.template="shadowsocksr/ping"
 o.width="10%"
+
+
+node = s:option(Button,"apply_node",translate("Apply"))
+node.inputstyle = "apply"
+node.write = function(self, section)
+  ucic:set("shadowsocksr", '@global[0]', 'global_server', section)
+  ucic:save("shadowsocksr") 
+  ucic:commit("shadowsocksr")
+  luci.sys.exec("/etc/init.d/shadowsocksr restart")
+  luci.http.redirect(luci.dispatcher.build_url("admin", "services", "shadowsocksr", "client"))
+end
+
+o = s:option(Flag, "switch_enable", translate("Auto Switch"))
+o.rmempty = false
+function o.cfgvalue(...)
+	return Value.cfgvalue(...) or 1
+end
 
 m:append(Template("shadowsocksr/server_list"))
 
