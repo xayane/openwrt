@@ -12,8 +12,6 @@ uci set fstab.@global[0].anon_mount=1
 uci commit fstab
 
 uci set network.wan.proto='pppoe'
-uci set network.wan.username='CD68746833'
-uci set network.wan.password='87898247'
 uci set network.wan.ifname='eth0'
 uci set network.wan6.ifname='eth0'
 uci set network.lan.ipaddr='10.0.0.1'
