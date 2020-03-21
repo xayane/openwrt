@@ -19,7 +19,7 @@ uci set network.wan6.ifname='eth0'
 uci set network.lan.ipaddr='10.0.0.1'
 uci set network.lan.proto='static'
 uci set network.lan.type='bridge'
-uci set network.lan.ifname='eth1 eth2 eth3'
+uci set network.lan.ifname='eth1 eth2 eth3 eth4'
 uci commit network
 
 rm -f /usr/lib/lua/luci/view/admin_status/index/mwan.htm
