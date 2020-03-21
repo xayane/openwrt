@@ -106,6 +106,7 @@ generate_network() {
 				set network.$1.proto='static'
 				set network.$1.ipaddr='$ipad'
 				set network.$1.netmask='$netm'
+				set network.$1.gateway='10.0.0.1'
 			EOF
 			[ -e /proc/sys/net/ipv6 ] && uci set network.$1.ip6assign='60'
 		;;
