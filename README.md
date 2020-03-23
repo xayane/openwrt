@@ -42,14 +42,6 @@ sudo apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git
 
 如果你觉得此项目对你有帮助，可以捐助我们，以鼓励项目能持续发展，更加完善
 
-### Alipay 支付宝
-
-![alipay](doc/alipay_donate.jpg)
-
-### Wechat 微信
-  
-![wechat](doc/wechat_donate.jpg)
-
 ------
 
 English Version:How to make your Openwrt firmware.
