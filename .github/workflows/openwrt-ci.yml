@@ -48,6 +48,12 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      - name: Get new themes
+        run: |
+          rm -rf package/lean/luci-theme-argon
+          git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/lean/luci-theme-argon
+          git clone https://github.com/Leo-Jo-My/luci-theme-opentomato.git package/lean/luci-theme-opentomato
+
       - name: Costom configure file
         run: |
           rm -f ./.config*
@@ -172,13 +178,14 @@ jobs:
           CONFIG_PACKAGE_luci-theme-netgear=y
           CONFIG_PACKAGE_luci-theme-bootstrap=y
           CONFIG_PACKAGE_luci-theme-material=y
+          CONFIG_PACKAGE_luci-theme-opentomato=y
           EOF
 
           # 常用软件包:
           cat >> .config <<EOF
           CONFIG_PACKAGE_curl=y
           CONFIG_PACKAGE_htop=y
-          # CONFIG_PACKAGE_nano=y
+          CONFIG_PACKAGE_nano=y
           CONFIG_PACKAGE_screen=y
           CONFIG_PACKAGE_tree=y
           CONFIG_PACKAGE_vim-fuller=y
