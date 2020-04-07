@@ -145,6 +145,7 @@ jobs:
           # CONFIG_PACKAGE_luci-app-frpc is not set
           # CONFIG_PACKAGE_luci-app-hd-idle is not set
           # CONFIG_PACKAGE_luci-app-kodexplorer is not set
+          # CONFIG_PACKAGE_luci-app-music-remote-center is not set
           CONFIG_PACKAGE_luci-app-minidlna=y
           # CONFIG_PACKAGE_luci-app-openvpn is not set
           # CONFIG_PACKAGE_luci-app-openvpn-server is not set
