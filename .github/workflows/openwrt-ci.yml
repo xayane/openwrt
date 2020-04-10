@@ -10,18 +10,16 @@
 name: OpenWrt-CI
 
 on:
-  #push:
-    #branches: 
-      #- master
+  push:
+    branches: 
+      - master
   # schedule:
   #   - cron: 0 20 * * *
   # release:
   #   types: [published]
-  schedule:
-    - cron: 0 20 * * *
-  push:
-    tags:
-      - '*'
+  #push:
+  #  tags:
+  #    - '*'
 
 jobs:
 
@@ -154,6 +152,7 @@ jobs:
           # CONFIG_PACKAGE_luci-app-kodexplorer is not set
           # CONFIG_PACKAGE_luci-app-music-remote-center is not set
           CONFIG_PACKAGE_luci-app-minidlna=y
+          CONFIG_PACKAGE_luci-app-ocserv=y
           # CONFIG_PACKAGE_luci-app-openvpn is not set
           # CONFIG_PACKAGE_luci-app-openvpn-server is not set
           # CONFIG_PACKAGE_luci-app-qbittorrent is not set
