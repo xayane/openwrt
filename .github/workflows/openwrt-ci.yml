@@ -152,7 +152,6 @@ jobs:
           # CONFIG_PACKAGE_luci-app-kodexplorer is not set
           # CONFIG_PACKAGE_luci-app-music-remote-center is not set
           CONFIG_PACKAGE_luci-app-minidlna=y
-          CONFIG_PACKAGE_luci-app-ocserv=y
           # CONFIG_PACKAGE_luci-app-openvpn is not set
           # CONFIG_PACKAGE_luci-app-openvpn-server is not set
           # CONFIG_PACKAGE_luci-app-qbittorrent is not set
@@ -176,6 +175,7 @@ jobs:
           CONFIG_PACKAGE_luci-app-upnp=y
           CONFIG_PACKAGE_luci-app-vlmcsd=y
           CONFIG_PACKAGE_luci-app-wol=y
+          # CONFIG_PACKAGE_luci-app-amule is not set
           # CONFIG_PACKAGE_luci-app-watchcat is not set
           # CONFIG_PACKAGE_luci-app-xlnetacc is not set
           EOF
