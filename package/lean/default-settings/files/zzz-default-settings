@@ -5,10 +5,20 @@ uci commit luci
 
 uci set system.@system[0].timezone=CST-8
 uci set system.@system[0].zonename=Asia/Shanghai
+uci set system.@system[0].hostname=ironman
 uci commit system
 
 uci set fstab.@global[0].anon_mount=1
 uci commit fstab
+
+uci set network.wan.proto='pppoe'
+uci set network.wan.ifname='eth0'
+uci set network.wan6.ifname='eth0'
+uci set network.lan.ipaddr='10.0.0.1'
+uci set network.lan.proto='static'
+uci set network.lan.type='bridge'
+uci set network.lan.ifname='eth1 eth2 eth3'
+uci commit network
 
 rm -f /usr/lib/lua/luci/view/admin_status/index/mwan.htm
 rm -f /usr/lib/lua/luci/view/admin_status/index/upnp.htm
