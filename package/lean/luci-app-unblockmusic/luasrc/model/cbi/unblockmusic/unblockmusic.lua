@@ -1,7 +1,7 @@
 local fs = require "nixio.fs"
 
 mp = Map("unblockmusic", translate("解锁网易云灰色歌曲"))
-mp.description = translate("采用 [QQ/虾米/百度/酷狗/酷我/咪咕/JOOX]等音源，替换网易云变灰歌曲链接")
+mp.description = translate("采用 [QQ/百度/酷狗/酷我/咪咕/JOOX]等音源，替换网易云变灰歌曲链接")
 
 mp:section(SimpleSection).template  = "unblockmusic/unblockmusic_status"
 
@@ -27,7 +27,6 @@ speedtype = s:option(Value, "musicapptype", translate("音源选择"))
 speedtype:value("default", translate("默认"))
 speedtype:value("netease", translate("网易云音乐"))
 speedtype:value("qq", translate("QQ音乐"))
-speedtype:value("xiami", translate("虾米音乐"))
 speedtype:value("baidu", translate("百度音乐"))
 speedtype:value("kugou", translate("酷狗音乐"))
 speedtype:value("kuwo", translate("酷我音乐"))
@@ -70,7 +69,7 @@ o.description = translate("每天自动检测并更新到最新版本")
 o:depends("apptype", "nodejs")
 
 download_certificate=s:option(DummyValue,"opennewwindow",translate("HTTPS 证书"))
-download_certificate.description = translate("<input type=\"button\" class=\"cbi-button cbi-button-apply\" value=\"下载CA根证书\" onclick=\"window.open('https://raw.githubusercontent.com/nondanee/UnblockNeteaseMusic/master/ca.crt')\" /><br />Mac/iOS客户端需要安装 CA根证书并信任<br />iOS系统需要在“设置 -> 通用 -> 关于本机 -> 证书信任设置”中，信任 UnblockNeteaseMusic Root CA <br />Linux 设备请在启用时加入 --ignore-certificate-errors 参数")
+download_certificate.description = translate("<input type=\"button\" class=\"btn cbi-button cbi-button-apply\" value=\"下载CA根证书\" onclick=\"window.open('https://raw.githubusercontent.com/1715173329/UnblockNeteaseMusic/enhanced/ca.crt')\" /><br />Mac/iOS客户端需要安装 CA根证书并信任<br />iOS系统需要在“设置 -> 通用 -> 关于本机 -> 证书信任设置”中，信任 UnblockNeteaseMusic Root CA <br />Linux 设备请在启用时加入 --ignore-certificate-errors 参数")
 
 local ver = fs.readfile("/usr/share/UnblockNeteaseMusic/core_ver") or "0.00"
 
