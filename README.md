@@ -57,10 +57,6 @@ make -j$(($(nproc) + 1)) V=s
 ```
 
 编译完成后输出路径：bin/targets
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 
 特别提示：
 ------
