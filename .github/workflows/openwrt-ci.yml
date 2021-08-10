@@ -182,6 +182,7 @@ jobs:
           CONFIG_PACKAGE_luci-app-upnp=y
           CONFIG_PACKAGE_luci-app-vlmcsd=y
           CONFIG_PACKAGE_luci-app-wol=y
+          CONFIG_PACKAGE_luci-app-pushbot=y
           # CONFIG_PACKAGE_luci-app-amule is not set
           # CONFIG_PACKAGE_luci-app-watchcat is not set
           # CONFIG_PACKAGE_luci-app-xlnetacc is not set
