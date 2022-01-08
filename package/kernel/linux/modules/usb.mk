@@ -1142,7 +1142,7 @@ define KernelPackage/usb-net-asix
   KCONFIG:=CONFIG_USB_NET_AX8817X
   FILES:= \
 	$(LINUX_DIR)/drivers/$(USBNET_DIR)/asix.ko \
-	$(LINUX_DIR)/net/core/selftests.ko
+	$(LINUX_DIR)/net/core/selftests.ko@ge5.13
   AUTOLOAD:=$(call AutoProbe,asix)
   $(call AddDepends/usb-net)
 endef
@@ -1358,6 +1358,7 @@ $(eval $(call KernelPackage,usb-net-rtl8150))
 
 define KernelPackage/usb-net-rtl8152
   TITLE:=Kernel module for USB-to-Ethernet Realtek convertors
+  DEPENDS:=+r8152-firmware +kmod-crypto-sha256 +kmod-usb-net-cdc-ncm
   KCONFIG:=CONFIG_USB_RTL8152
   FILES:=$(LINUX_DIR)/drivers/$(USBNET_DIR)/r8152.ko
   AUTOLOAD:=$(call AutoProbe,r8152)
