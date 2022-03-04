@@ -72,9 +72,9 @@ jobs:
       - name: Get new themes
         run: |
           rm -rf package/feeds/luci/luci-theme-argon
-          rm -rf package/feeds/luci/luci-theme-opentomato
           git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/feeds/luci/luci-theme-argon
-          git clone https://github.com/Leo-Jo-My/luci-theme-opentomato.git package/feeds/luci/luci-theme-opentomato
+          git clone https://github.com/xiaoqingfengATGH/luci-theme-infinityfreedom.git package/feeds/luci/luci-theme-infinityfreedom
+          git clone https://github.com/sirpdboy/luci-theme-opentopd.git package/feeds/luci/luci-theme-opentopd
 
       - name: Costom configure file
         run: |
