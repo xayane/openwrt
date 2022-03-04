@@ -214,6 +214,8 @@ jobs:
           CONFIG_PACKAGE_luci-theme-bootstrap=y
           CONFIG_PACKAGE_luci-theme-material=y
           CONFIG_PACKAGE_luci-theme-opentomato=y
+          CONFIG_PACKAGE_luci-theme-infinityfreedom=y
+          CONFIG_PACKAGE_luci-theme-opentopd=y
           EOF
 
           # 常用软件包:
