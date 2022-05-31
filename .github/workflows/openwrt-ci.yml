@@ -79,6 +79,7 @@ jobs:
           git clone https://github.com/sirpdboy/luci-theme-opentopd.git package/feeds/luci/luci-theme-opentopd
           git clone https://github.com/thinktip/luci-theme-neobird.git package/feeds/luci/luci-theme-neobird
           git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/feeds/luci/luci-theme-argon
+          git clone https://github.com/jerrykuku/luci-app-argon-config
 
       - name: Costom configure file
         run: |
@@ -214,6 +215,7 @@ jobs:
           # LuCI主题:
           cat >> .config <<EOF
           CONFIG_PACKAGE_luci-theme-argon=y
+          CONFIG_PACKAGE_luci-app-argon-config=y
           CONFIG_PACKAGE_luci-theme-netgear=y
           CONFIG_PACKAGE_luci-theme-bootstrap=y
           CONFIG_PACKAGE_luci-theme-material=y
