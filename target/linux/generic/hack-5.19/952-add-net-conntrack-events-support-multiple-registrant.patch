@@ -53,14 +53,21 @@ Signed-off-by: Zhi Chen <zhichen@codeaurora.org>
  
  	e = nf_ct_ecache_find(ct);
  	if (e == NULL)
-@@ -117,20 +124,24 @@ nf_conntrack_event_report(enum ip_conntr
+@@ -117,20 +124,34 @@ nf_conntrack_event_report(enum ip_conntr
  			  u32 portid, int report)
  {
  #ifdef CONFIG_NF_CONNTRACK_EVENTS
+-	if (nf_ct_ecache_exist(ct))
+-		return nf_conntrack_eventmask_report(1 << event, ct, portid, report);
 +#ifndef CONFIG_NF_CONNTRACK_CHAIN_EVENTS
- 	if (nf_ct_ecache_exist(ct))
- 		return nf_conntrack_eventmask_report(1 << event, ct, portid, report);
++	const struct net *net = nf_ct_net(ct);
++
++	if (!rcu_access_pointer(net->ct.nf_conntrack_event_cb))
++		return 0;
  #endif
++
++	return nf_conntrack_eventmask_report(1 << event, ct, portid, report);
++#else
  	return 0;
 +#endif
  }
@@ -69,10 +76,17 @@ Signed-off-by: Zhi Chen <zhichen@codeaurora.org>
  nf_conntrack_event(enum ip_conntrack_events event, struct nf_conn *ct)
  {
  #ifdef CONFIG_NF_CONNTRACK_EVENTS
+-	if (nf_ct_ecache_exist(ct))
+-		return nf_conntrack_eventmask_report(1 << event, ct, 0, 0);
 +#ifndef CONFIG_NF_CONNTRACK_CHAIN_EVENTS
- 	if (nf_ct_ecache_exist(ct))
- 		return nf_conntrack_eventmask_report(1 << event, ct, 0, 0);
++	const struct net *net = nf_ct_net(ct);
++
++	if (!rcu_access_pointer(net->ct.nf_conntrack_event_cb))
++		return 0;
  #endif
++
++	return nf_conntrack_eventmask_report(1 << event, ct, 0, 0);
++#else
  	return 0;
 +#endif
  }
@@ -92,7 +106,7 @@ Signed-off-by: Zhi Chen <zhichen@codeaurora.org>
  #if defined(CONFIG_NF_CONNTRACK_LABELS)
 --- a/net/netfilter/Kconfig
 +++ b/net/netfilter/Kconfig
-@@ -162,6 +162,14 @@ config NF_CONNTRACK_EVENTS
+@@ -161,6 +161,14 @@ config NF_CONNTRACK_EVENTS
  
  	  If unsure, say `N'.
  
