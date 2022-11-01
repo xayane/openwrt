@@ -1,3 +1,4 @@
+
 PART_NAME=firmware
 REQUIRE_IMAGE_METADATA=1
 
@@ -9,10 +10,13 @@ platform_check_image() {
 }
 
 platform_do_upgrade() {
-	board=$(board_name)
-	case $board in
-	qihoo,v6)
+	case "$(board_name)" in
+	cmiot,ax18|\
+	zn,m2)
 		nand_do_upgrade "$1"
+		;;
+    *)
+		default_do_upgrade "$1"
 		;;
 	esac
 }
