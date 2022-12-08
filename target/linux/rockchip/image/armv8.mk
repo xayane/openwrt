@@ -18,7 +18,7 @@ define Device/hinlink_opc-h68k
   SOC := rk3568
   UBOOT_DEVICE_NAME := opc-h68k-rk3568
   IMAGE/sysupgrade.img.gz := boot-common | boot-script nanopi-r5s | pine64-img | gzip | append-metadata
-  DEVICE_PACKAGES := kmod-mt7921e kmod-r8125
+  DEVICE_PACKAGES := kmod-ata-ahci-platform kmod-mt7921e kmod-r8125
 endef
 TARGET_DEVICES += hinlink_opc-h68k
 
@@ -152,6 +152,16 @@ define Device/radxa_rock-pi-e25
   DEVICE_PACKAGES := kmod-r8125
 endef
 TARGET_DEVICES += radxa_rock-pi-e25
+
+define Device/rongpin_king3399
+  DEVICE_VENDOR := Rongpin
+  DEVICE_MODEL := King3399
+  SOC := rk3399
+  UBOOT_DEVICE_NAME := rongpin-king3399-rk3399
+  IMAGE/sysupgrade.img.gz := boot-common | boot-script nanopi-r4s | pine64-bin | gzip | append-metadata
+  DEVICE_PACKAGES := kmod-r8168 -urngd
+endef
+TARGET_DEVICES += rongpin_king3399
 
 define Device/sharevdi_guangmiao-g4c
   DEVICE_VENDOR := SHAREVDI
