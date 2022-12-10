@@ -79,6 +79,7 @@ jobs:
       - name: Get new themes
         run: |
           rm -rf package/feeds/luci/luci-theme-argon
+          rm -rf package/feeds/luci/luci-app-argon-config
           rm -rf package/feeds/luci/luci-theme-infinityfreedom
           rm -rf package/feeds/luci/luci-theme-opentopd
           rm -rf package/feeds/luci/luci-theme-neobird
