@@ -68,6 +68,9 @@ define Build/Trusted-Firmware-A/Target
   endef
 endef
 
+define Build/Configure/Trusted-Firmware-A
+	$(INSTALL_DIR) $(STAGING_DIR)/usr/include
+endef
 
 DTC=$(wildcard $(LINUX_DIR)/scripts/dtc/dtc)
 
@@ -78,6 +81,7 @@ define Build/Compile/Trusted-Firmware-A
 		$(if $(DTC),DTC="$(DTC)") \
 		PLAT=$(PLAT) \
 		BUILD_STRING="OpenWrt v$(PKG_VERSION)-$(PKG_RELEASE) ($(VARIANT))" \
+		$(if $(CONFIG_BINUTILS_VERSION_2_39),LDFLAGS="-no-warn-rwx-segments") \
 		$(TFA_MAKE_FLAGS)
 endef
 

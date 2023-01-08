@@ -64,24 +64,6 @@ Special tips:
 
 3. Want to learn OpenWrt development but don't know how? Can't motivate yourself for self-learning? Not enough fundamental knowledge? Learn OpenWrt development with Mr. Zuo through his Beginner OpenWrt Training Course. Click [here](http://forgotfun.org/2018/04/openwrt-training-2018.html) to register.
 
-## Router Recommendation
-Not Sponsored: If you are finding a low power consumption, small and performance promising x86/x64 router, I personally recommend the 
-EZPROv1 Alumium Edition (N3710 4000M): [Details](https://item.taobao.com/item.htm?spm=a230r.1.14.20.144c763fRkK0VZ&id=561126544764)
-
-![xm1](doc/xm5.jpg)
-![xm2](doc/xm6.jpg)
-
-## Donation
-
-If this project does help you, please consider donating to support the development of this project.
-
-### Alipay
-
-![alipay](doc/alipay_donate.jpg)
-
-### WeChat
-
-![wechat](doc/wechat_donate.jpg)
 
 ## Note: Addition Lean's private package source code in `./package/lean` directory. Use it under GPL v3.
 
