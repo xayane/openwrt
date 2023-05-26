@@ -26,12 +26,13 @@
    ```bash
    sudo apt update -y
    sudo apt full-upgrade -y
-   sudo apt install -y ack antlr3 aria2 asciidoc autoconf automake autopoint binutils bison build-essential \
+   sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
    bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib \
    git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev \
    libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libreadline-dev libssl-dev libtool lrzsz \
-   mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pip libpython3-dev qemu-utils \
-   rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
+   mkisofs msmtp nano ninja-build p7zip p7zip-full patch pkgconf python2.7 python3 python3-pyelftools \
+   libpython3-dev qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip \
+   vim wget xmlto xxd zlib1g-dev
    ```
 
 3. 下载源代码，更新 feeds 并选择配置
@@ -52,7 +53,7 @@
    make V=s -j1
    ```
 
-本套代码保证肯定可以编译成功。里面包括了 R22 所有源代码，包括 IPK 的。
+本套代码保证肯定可以编译成功。里面包括了 R23 所有源代码，包括 IPK 的。
 
 你可以自由使用，但源码编译二次发布请注明我的 GitHub 仓库链接。谢谢合作！
 
@@ -129,3 +130,18 @@ PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 4. 存档版本仓库地址：<https://github.com/coolsnowwolf/openwrt>
 
+## 软路由介绍
+
+iKOOLCORE 硬酷R1 多网口小主机 - N5105/N6005 : Cube box, rest fun. 方寸之间，尽享乐趣
+
+(商品介绍页面 - 硬酷科技（支持花呗）)：
+[优惠券链接](https://taoquan.taobao.com/coupon/unify_apply.htm?sellerId=2208215115814&activityId=85fbaf791c4b45e9aaf5ec8e3d1cb2a9)
+[下单链接](https://item.taobao.com/item.htm?ft=t&id=682987219699)
+
+[![r1](doc/r1.jpg)](https://item.taobao.com/item.htm?ft=t&id=682025492099)
+
+## 捐贈
+
+如果你觉得此项目对你有帮助，可以捐助我们，以鼓励项目能持续发展，更加完善
+
+ ![star](doc/star.png)
