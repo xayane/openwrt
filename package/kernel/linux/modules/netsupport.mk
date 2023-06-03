@@ -1048,7 +1048,6 @@ $(eval $(call KernelPackage,tcp-bbr))
 define KernelPackage/tls
   SUBMENU:=$(NETWORK_SUPPORT_MENU)
   TITLE:=In-kernel TLS Support with HW Offload
-  DEPENDS:=@(LINUX_5_15||LINUX_6_1)
   KCONFIG:=CONFIG_TLS \
 	CONFIG_TLS_DEVICE=y
   FILES:=$(LINUX_DIR)/net/tls/tls.ko
@@ -1362,6 +1361,21 @@ define KernelPackage/mdio/description
 endef
 
 $(eval $(call KernelPackage,mdio))
+
+define KernelPackage/mdio-bus-mux
+  SUBMENU:=$(NETWORK_SUPPORT_MENU)
+  TITLE:=MDIO bus multiplexers
+  KCONFIG:=CONFIG_MDIO_BUS_MUX
+  HIDDEN:=1
+  FILES:=$(LINUX_DIR)/drivers/net/mdio/mdio-mux.ko
+  AUTOLOAD:=$(call AutoLoad,32,mdio-mux)
+endef
+
+define KernelPackage/mdio/description
+ Kernel framework for MDIO bus multiplexers.
+endef
+
+$(eval $(call KernelPackage,mdio-bus-mux))
 
 define KernelPackage/macsec
   SUBMENU:=$(NETWORK_SUPPORT_MENU)
