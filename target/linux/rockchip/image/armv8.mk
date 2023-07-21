@@ -186,13 +186,13 @@ define Device/lyt_t68m
   SOC := rk3568
   UBOOT_DEVICE_NAME := lyt-t68m-rk3568
   IMAGE/sysupgrade.img.gz := boot-common | boot-script nanopi-r5s | pine64-img | gzip | append-metadata
-  DEVICE_PACKAGES := kmod-r8125
+  DEVICE_PACKAGES := kmod-r8125 wpad-openssl kmod-mt7921-firmware kmod-mt7922-firmware kmod-mt7921e kmod-mt7916-firmware
 endef
 TARGET_DEVICES += lyt_t68m
 
 define Device/panther_x2
   DEVICE_VENDOR := Panther
-  DEVICE_MODEL := Panther X2
+  DEVICE_MODEL := X2
   DEVICE_DTS := rockchip/rk3566-panther-x2
   UBOOT_DEVICE_NAME := panther-x2-rk3566
   IMAGE/sysupgrade.img.gz := boot-common | boot-script nanopi-r5s | pine64-img | gzip | append-metadata
