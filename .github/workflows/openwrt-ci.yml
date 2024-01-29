@@ -200,10 +200,13 @@ jobs:
           # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_NONE_V2RAY is not set
           # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_V2ray is not set
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Xray=y
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_SagerNet_Core is not set
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Kcptun=y
+          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ChinaDNS_NG=y
+          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_MosDNS=y
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Hysteria=y
+          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Tuic_Client=y
+          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadow_TLS=y
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_IPT2Socks=y
+          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Kcptun=y
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_NaiveProxy=y
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Redsocks2=y
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Simple_Obfs=y
@@ -218,7 +221,17 @@ jobs:
           CONFIG_PACKAGE_luci-app-wrtbwmon=y
           CONFIG_PACKAGE_luci-app-ddns=y
           # CONFIG_PACKAGE_luci-app-haproxy-tcp is not set
+          CONFIG_PACKAGE_luci-app-turboacc=y
+          CONFIG_PACKAGE_luci-app-turboacc_INCLUDE_OFFLOADING=y
+          CONFIG_PACKAGE_luci-app-turboacc_INCLUDE_BBR_CCA=y
+          CONFIG_PACKAGE_luci-app-turboacc_INCLUDE_PDNSD=y
+          CONFIG_PACKAGE_luci-app-turboacc_INCLUDE_DNSFORWARDER is not set
+          CONFIG_PACKAGE_luci-app-turboacc_INCLUDE_DNSPROXY is not set
+          # CONFIG_PACKAGE_luci-app-udpxy is not set
+          # CONFIG_PACKAGE_luci-app-uhttpd is not set
           CONFIG_PACKAGE_luci-app-unblockmusic=y
+          CONFIG_PACKAGE_luci-app-unblockmusic_INCLUDE_UnblockNeteaseMusic_Go=y
+          CONFIG_PACKAGE_luci-app-unblockmusic_INCLUDE_UnblockNeteaseMusic_NodeJS=y
           CONFIG_PACKAGE_luci-app-upnp=y
           CONFIG_PACKAGE_luci-app-vlmcsd=y
           CONFIG_PACKAGE_luci-app-wol=y
@@ -229,6 +242,7 @@ jobs:
           # CONFIG_PACKAGE_luci-app-xlnetacc is not set
           # CONFIG_PACKAGE_luci-app-jd-dailybonus is not set
           # CONFIG_PACKAGE_luci-app-uugamebooster is not set
+          CONFIG_PACKAGE_luci-app-zerotier=y
           EOF
 
           # LuCI主题:
