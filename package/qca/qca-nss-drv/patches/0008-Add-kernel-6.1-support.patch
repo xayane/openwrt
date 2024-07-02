@@ -1,20 +1,3 @@
-From aa48e29c88c467ba0b2cf9d1f32a7f3484d88e0e Mon Sep 17 00:00:00 2001
-From: JiaY-shi <shi05275@163.com>
-Date: Fri, 9 Jun 2023 20:51:03 +0800
-Subject: [PATCH] nss-drv: adapt to netif_napi_add() changes
-
-netif_napi_add() removed the weight argument and just uses the default
-NAPI_POLL_WEIGHT in background, so for those requiring custom weight use
-netif_napi_add_weight() instead.
----
- nss_hal/fsm9010/nss_hal_pvt.c |  6 +++-
- nss_hal/ipq50xx/nss_hal_pvt.c |  6 +++-
- nss_hal/ipq60xx/nss_hal_pvt.c | 60 +++++++++++++++++++++++++++++------
- nss_hal/ipq806x/nss_hal_pvt.c |  6 +++-
- nss_hal/ipq807x/nss_hal_pvt.c | 60 +++++++++++++++++++++++++++++------
- nss_hal/ipq95xx/nss_hal_pvt.c |  6 +++-
- 6 files changed, 120 insertions(+), 24 deletions(-)
-
 --- a/nss_hal/fsm9010/nss_hal_pvt.c
 +++ b/nss_hal/fsm9010/nss_hal_pvt.c
 @@ -291,7 +291,11 @@ static int __nss_hal_request_irq(struct
