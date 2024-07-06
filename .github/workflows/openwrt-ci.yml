@@ -146,6 +146,7 @@ jobs:
           git clone https://github.com/thinktip/luci-theme-neobird.git package/feeds/luci/luci-theme-neobird
           git clone -b 18.06 https://github.com/jerrykuku/luci-theme-argon.git package/feeds/luci/luci-theme-argon
           git clone -b 18.06 https://github.com/jerrykuku/luci-app-argon-config.git package/feeds/luci/luci-app-argon-config
+          git clone https://github.com/asvow/luci-app-tailscale.git package/feeds/luci/luci-app-tailscale
 
       - name: Costom configure file
         run: |
@@ -296,6 +297,7 @@ jobs:
           # CONFIG_PACKAGE_luci-app-xlnetacc is not set
           # CONFIG_PACKAGE_luci-app-jd-dailybonus is not set
           # CONFIG_PACKAGE_luci-app-uugamebooster is not set
+          CONFIG_PACKAGE_luci-app-tailscale=y
           CONFIG_PACKAGE_luci-app-zerotier=y
           EOF
 
