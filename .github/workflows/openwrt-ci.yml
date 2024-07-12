@@ -207,6 +207,9 @@ jobs:
           cat >> .config <<EOF
           CONFIG_PACKAGE_dnsmasq_full_dhcpv6=y
           CONFIG_PACKAGE_ipv6helper=y
+          CONFIG_PACKAGE_odhcp6c=y
+          CONFIG_PACKAGE_odhcpd-ipv6only=y
+          CONFIG_PACKAGE_luci-proto-ipv6=y
           EOF
 
           # 多文件系统支持:
@@ -297,7 +300,7 @@ jobs:
           # CONFIG_PACKAGE_luci-app-xlnetacc is not set
           # CONFIG_PACKAGE_luci-app-jd-dailybonus is not set
           # CONFIG_PACKAGE_luci-app-uugamebooster is not set
-          CONFIG_PACKAGE_luci-app-tailscale=y
+          CONFIG_PACKAGE_luci-app-tailscale is not set
           CONFIG_PACKAGE_luci-app-zerotier=y
           EOF
 
