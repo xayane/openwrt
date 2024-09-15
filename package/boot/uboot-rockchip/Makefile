@@ -268,17 +268,6 @@ define U-Boot/seewo-sv21-rk3568
     seewo_sv21-rk3568
 endef
 
-define U-Boot/sige3-rk3568
-  BUILD_SUBTARGET:=armv8
-  NAME:=Sige3
-  BUILD_DEVICES:= \
-    armsom_sige3
-  DEPENDS:=+PACKAGE_u-boot-sige3-rk3568:arm-trusted-firmware-rk3568
-  PKG_BUILD_DEPENDS:=arm-trusted-firmware-rockchip-vendor
-  ATF:=rk3568_bl31_v1.43.elf
-  DDR:=rk3568_ddr_1560MHz_v1.18.bin
-endef
-
 define U-Boot/station-p2-rk3568
   $(U-Boot/rk3568/Default)
   NAME:=StationP2
@@ -299,7 +288,6 @@ UBOOT_TARGETS := \
   rock-3a-rk3568 \
   rsb4810-rk3568 \
   seewo-sv21-rk3568 \
-  sige3-rk3568 \
   station-p2-rk3568 \
   dlfr100-rk3399 \
   h3399pc-rk3399 \
