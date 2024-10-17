@@ -223,6 +223,7 @@ jobs:
           EOF
 
           # bonding支持:
+          cat >> .config <<EOF
           CONFIG_PACKAGE_kmod-bonding=y
           CONFIG_PACKAGE_proto-bonding=y
           CONFIG_PACKAGE_luci-proto-bonding=y
