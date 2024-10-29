@@ -18,12 +18,12 @@ uci set fstab.@global[0].anon_mount=1
 uci commit fstab
 
 uci set network.wan.proto='pppoe'
-uci set network.wan.ifname='eth0'
-uci set network.wan6.ifname='eth0'
+uci set network.wan.ifname='bond-wan'
+uci set network.wan6.ifname='bond-wan'
 uci set network.lan.ipaddr='10.0.0.1'
 uci set network.lan.proto='static'
 uci set network.lan.type='bridge'
-uci set network.lan.ifname='eth1 eth2 eth3'
+uci set network.lan.ifname='bond-lan'
 uci commit network
 
 uci set luci.themes.Argon=/luci-static/argon
