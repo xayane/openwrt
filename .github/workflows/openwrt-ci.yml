@@ -105,7 +105,13 @@ jobs:
           df -hT
           echo "=============================================================================="
 
-      - name: Space cleanup
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Initialization environment
+        working-directory: /home/runner/work/openwrt/openwrt/
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
@@ -119,14 +125,9 @@ jobs:
           sudo -E systemctl daemon-reload
           sudo -E apt -y autoremove --purge
           sudo -E apt clean
-          sudo -E timedatectl set-timezone "Asia/Shanghai"
-          
+          sudo -E timedatectl set-timezone "$TZ"
+          sudo chown $USER:$GROUPS /home/runner/work/openwrt/openwrt/
           df -h
-
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: master
 
       - name: Update feeds
         run: |
