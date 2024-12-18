@@ -104,11 +104,6 @@ jobs:
           echo "=============================================================================="
           df -hT
           echo "=============================================================================="
-    
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: master
 
       - name: Space cleanup
         env:
@@ -127,6 +122,11 @@ jobs:
           sudo -E timedatectl set-timezone "Asia/Shanghai"
           
           df -h
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master
 
       - name: Update feeds
         run: |
