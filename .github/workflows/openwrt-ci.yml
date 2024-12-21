@@ -251,8 +251,8 @@ jobs:
           CONFIG_PACKAGE_luci-app-minidlna=y
           # CONFIG_PACKAGE_luci-app-openvpn is not set
           # CONFIG_PACKAGE_luci-app-openvpn-server is not set
-          # CONFIG_PACKAGE_luci-app-samba is not set
-          CONFIG_PACKAGE_luci-app-samba4=y
+          CONFIG_PACKAGE_luci-app-samba=y
+          # CONFIG_PACKAGE_luci-app-samba4 is not set
           CONFIG_PACKAGE_luci-app-ssr-plus=y
           # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_libustream-mbedtls is not set
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_libustream-openssl=y
