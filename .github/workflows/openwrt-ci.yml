@@ -131,7 +131,7 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
-      - name: Get new themes
+      - name: Get new themes and applications
         run: |
           rm -rf package/feeds/luci/luci-theme-argon
           rm -rf package/feeds/luci/luci-app-argon-config
@@ -141,10 +141,11 @@ jobs:
           #rm -rf package/feeds/luci/luci-theme-neobird
           git clone https://github.com/xiaoqingfengATGH/luci-theme-infinityfreedom.git package/feeds/luci/luci-theme-infinityfreedom
           git clone https://github.com/SAENE/luci-theme-design.git package/feeds/luci/luci-theme-design
-          #git clone https://github.com/sirpdboy/luci-theme-opentopd.git package/feeds/luci/luci-theme-opentopd
-          #git clone https://github.com/thinktip/luci-theme-neobird.git package/feeds/luci/luci-theme-neobird
           git clone -b master https://github.com/jerrykuku/luci-theme-argon.git package/feeds/luci/luci-theme-argon
           git clone -b master https://github.com/jerrykuku/luci-app-argon-config.git package/feeds/luci/luci-app-argon-config
+          git clone https://github.com/zzsj0928/luci-app-pushbot package/feeds/luci/luci-app-pushbot
+          git clone https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic package/feeds/luci/luci-app-unblockneteasemusic
+          
 
       - name: Costom configure file
         run: |
@@ -241,8 +242,8 @@ jobs:
           # CONFIG_PACKAGE_luci-app-adbyby-plus is not set
           CONFIG_PACKAGE_luci-app-autoreboot=y
           CONFIG_PACKAGE_luci-app-airplay2=y
+          CONFIG_PACKAGE_luci-app-alist=y
           # CONFIG_PACKAGE_luci-app-aria2 is not set
-          # CONFIG_PACKAGE_luci-app-baidupcs-web is not set
           # CONFIG_PACKAGE_luci-app-docker is not set
           # CONFIG_PACKAGE_luci-app-frpc is not set
           # CONFIG_PACKAGE_luci-app-hd-idle is not set
@@ -251,8 +252,8 @@ jobs:
           CONFIG_PACKAGE_luci-app-minidlna=y
           # CONFIG_PACKAGE_luci-app-openvpn is not set
           # CONFIG_PACKAGE_luci-app-openvpn-server is not set
-          # CONFIG_PACKAGE_luci-app-qbittorrent is not set
-          # CONFIG_PACKAGE_luci-app-samba is not set
+          CONFIG_PACKAGE_luci-app-samba=y
+          CONFIG_PACKAGE_luci-app-samba4=y
           CONFIG_PACKAGE_luci-app-ssr-plus=y
           # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_libustream-mbedtls is not set
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_libustream-openssl=y
@@ -268,46 +269,29 @@ jobs:
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Xray=y
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ChinaDNS_NG=y
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_MosDNS=y
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Hysteria=y
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Tuic_Client=y
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadow_TLS=y
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_IPT2Socks=y
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Kcptun=y
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_NaiveProxy=y
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Redsocks2=y
+          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Hysteria is not set
+          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Tuic_Client is not set
+          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadow_TLS is not set
+          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_IPT2Socks is not set
+          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Kcptun is not set
+          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_NaiveProxy is not set
+          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Redsocks2 is not set
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Simple_Obfs=y
           # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_V2ray_Plugin is not set
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Libev_Client is not set
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Libev_Server is not set
+          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Libev_Client=y
+          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Libev_Server=y
           # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Trojan is not set
           CONFIG_PACKAGE_luci-app-ttyd=y
-          # CONFIG_PACKAGE_luci-app-v2ray-server is not set
           # CONFIG_PACKAGE_luci-app-wireguard=y
-          CONFIG_PACKAGE_luci-app-webadmin=y
-          CONFIG_PACKAGE_luci-app-wrtbwmon=y
           CONFIG_PACKAGE_luci-app-ddns=y
-          # CONFIG_PACKAGE_luci-app-haproxy-tcp is not set
           CONFIG_PACKAGE_luci-app-turboacc=y
-          # CONFIG_PACKAGE_TURBOACC_INCLUDE_NO_FASTPATH is not set
-          CONFIG_PACKAGE_TURBOACC_INCLUDE_FLOW_OFFLOADING=y
-          # CONFIG_PACKAGE_TURBOACC_INCLUDE_FAST_CLASSIFIER is not set
-          # CONFIG_PACKAGE_TURBOACC_INCLUDE_SHORTCUT_FE_CM is not set
           # CONFIG_PACKAGE_luci-app-udpxy is not set
           # CONFIG_PACKAGE_luci-app-uhttpd is not set
-          CONFIG_PACKAGE_luci-app-unblockmusic=y
-          CONFIG_PACKAGE_luci-app-unblockmusic_INCLUDE_UnblockNeteaseMusic_Go=y
-          CONFIG_PACKAGE_luci-app-unblockmusic_INCLUDE_UnblockNeteaseMusic_NodeJS=y
+          CONFIG_PACKAGE_luci-app-unblockneteasemusic=y
           CONFIG_PACKAGE_luci-app-upnp=y
           CONFIG_PACKAGE_luci-app-vlmcsd=y
           CONFIG_PACKAGE_luci-app-wol=y
           CONFIG_PACKAGE_luci-app-pushbot=y
-          # CONFIG_PACKAGE_luci-app-dockerman is not set
-          # CONFIG_PACKAGE_luci-app-amule is not set
-          # CONFIG_PACKAGE_luci-app-watchcat is not set
-          # CONFIG_PACKAGE_luci-app-xlnetacc is not set
-          # CONFIG_PACKAGE_luci-app-jd-dailybonus is not set
-          # CONFIG_PACKAGE_luci-app-uugamebooster is not set
-          # CONFIG_PACKAGE_luci-app-tailscale is not set
           CONFIG_PACKAGE_luci-app-zerotier=y
           EOF
 
@@ -319,9 +303,7 @@ jobs:
           CONFIG_PACKAGE_luci-theme-bootstrap=y
           CONFIG_PACKAGE_luci-theme-material=y
           CONFIG_PACKAGE_luci-theme-opentomato=y
-          # CONFIG_PACKAGE_luci-theme-infinityfreedom is not set
-          CONFIG_PACKAGE_luci-theme-opentopd=y
-          CONFIG_PACKAGE_luci-theme-neobird=y
+          # CONFIG_PACKAGE_luci-theme-infinityfreedom-ng is not set
           EOF
 
           # 常用软件包:
