@@ -67,6 +67,7 @@ struct __attribute__ ((__packed__)) fw_header {
 #define RTL931X_SERDES_MODE_CTRL		(0x13cc)
 #define RTL931X_PS_SERDES_OFF_MODE_CTRL_ADDR	(0x13F4)
 #define RTL931X_MAC_SERDES_MODE_CTRL(sds)	(0x136C + (((sds) << 2)))
+<<<<<<< HEAD
 
 int rtl839x_read_sds_phy(int phy_addr, int phy_reg);
 int rtl839x_write_sds_phy(int phy_addr, int phy_reg, u16 v);
@@ -96,3 +97,5 @@ void rtl9300_sds_set(int sds_num, u32 mode);
 int rtl931x_link_sts_get(u32 sds);
 void rtl931x_sds_fiber_disable(u32 sds);
 int rtl931x_sds_cmu_band_set(int sds, bool enable, u32 band, phy_interface_t mode);
+=======
+>>>>>>> upstream/master

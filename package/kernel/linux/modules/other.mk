@@ -1272,7 +1272,7 @@ $(eval $(call KernelPackage,tpm))
 define KernelPackage/tpm-tis
   SUBMENU:=$(OTHER_MENU)
   TITLE:=TPM TIS 1.2 Interface / TPM 2.0 FIFO Interface
-	DEPENDS:= @TARGET_x86 +kmod-tpm
+	DEPENDS:= @(TARGET_x86||TARGET_armsr) +kmod-tpm
   KCONFIG:= CONFIG_TCG_TIS
   FILES:= \
 	$(LINUX_DIR)/drivers/char/tpm/tpm_tis.ko \
@@ -1358,7 +1358,7 @@ $(eval $(call KernelPackage,itco-wdt))
 define KernelPackage/mhi-bus
   SUBMENU:=$(OTHER_MENU)
   TITLE:=MHI bus
-  DEPENDS:=@(LINUX_5_15||LINUX_6_1||LINUX_6_6||LINUX_6_12)
+  DEPENDS:=@!(LINUX_5_4||LINUX_5_10)
   KCONFIG:=CONFIG_MHI_BUS \
            CONFIG_MHI_BUS_DEBUG=y
   FILES:=$(LINUX_DIR)/drivers/bus/mhi/host/mhi.ko

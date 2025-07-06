@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
+<<<<<<< HEAD
 define Build/xikestor-nosimg
   $(STAGING_DIR_HOST)/bin/nosimg-enc -i $@ -o $@.new
   mv $@.new $@
@@ -47,6 +48,8 @@ define Device/zyxel_xgs1210-12
 endef
 TARGET_DEVICES += zyxel_xgs1210-12
 
+=======
+>>>>>>> upstream/master
 define Device/zyxel_xgs1250-12
   SOC := rtl9302
   UIMAGE_MAGIC := 0x93001250

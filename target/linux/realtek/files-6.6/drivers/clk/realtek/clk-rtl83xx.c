@@ -504,7 +504,11 @@ static int rtcl_ccu_create(struct device_node *np)
 	return 0;
 }
 
+<<<<<<< HEAD
 static int rtcl_register_clkhw(int clk_idx)
+=======
+int rtcl_register_clkhw(int clk_idx)
+>>>>>>> upstream/master
 {
 	int ret;
 	struct clk *clk;
@@ -592,7 +596,11 @@ err_hw_unregister:
 	return ret;
 }
 
+<<<<<<< HEAD
 static int rtcl_init_sram(void)
+=======
+int rtcl_init_sram(void)
+>>>>>>> upstream/master
 {
 	struct gen_pool *sram_pool;
 	phys_addr_t sram_pbase;
@@ -665,7 +673,11 @@ err_put_device:
 	return -ENXIO;
 }
 
+<<<<<<< HEAD
 static void rtcl_ccu_log_early(void)
+=======
+void rtcl_ccu_log_early(void)
+>>>>>>> upstream/master
 {
 	char meminfo[80], clkinfo[255], msg[255] = "rtl83xx-clk: initialized";
 
@@ -680,7 +692,11 @@ static void rtcl_ccu_log_early(void)
 	pr_info("%s\n", msg);
 }
 
+<<<<<<< HEAD
 static void rtcl_ccu_log_late(void)
+=======
+void rtcl_ccu_log_late(void)
+>>>>>>> upstream/master
 {
 	struct rtcl_clk *rclk;
 	bool overclock = false;

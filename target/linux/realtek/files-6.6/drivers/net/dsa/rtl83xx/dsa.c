@@ -7,6 +7,7 @@
 
 #include "rtl83xx.h"
 
+<<<<<<< HEAD
 static const u8 ipv4_ll_mcast_addr_base[ETH_ALEN] =
 { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 };
 static const u8 ipv4_ll_mcast_addr_mask[ETH_ALEN] =
@@ -16,6 +17,8 @@ static const u8 ipv6_all_hosts_mcast_addr_base[ETH_ALEN] =
 static const u8 ipv6_all_hosts_mcast_addr_mask[ETH_ALEN] =
 { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
+=======
+>>>>>>> upstream/master
 extern struct rtl83xx_soc_info soc_info;
 
 static void rtl83xx_init_stats(struct rtl838x_switch_priv *priv)
@@ -695,7 +698,10 @@ static void rtl83xx_phylink_get_caps(struct dsa_switch *ds, int port,
 	__set_bit(PHY_INTERFACE_MODE_XGMII, config->supported_interfaces);
 	__set_bit(PHY_INTERFACE_MODE_USXGMII, config->supported_interfaces);
 	__set_bit(PHY_INTERFACE_MODE_1000BASEX, config->supported_interfaces);
+<<<<<<< HEAD
 	__set_bit(PHY_INTERFACE_MODE_10GBASER, config->supported_interfaces);
+=======
+>>>>>>> upstream/master
 }
 
 static void rtl83xx_phylink_mac_config(struct dsa_switch *ds, int port,
@@ -819,7 +825,10 @@ static void rtl93xx_phylink_mac_config(struct dsa_switch *ds, int port,
 	pr_info("%s SDS is %d\n", __func__, sds_num);
 	if (sds_num >= 0 &&
 	    (state->interface == PHY_INTERFACE_MODE_1000BASEX ||
+<<<<<<< HEAD
 	     state->interface == PHY_INTERFACE_MODE_SGMII ||
+=======
+>>>>>>> upstream/master
 	     state->interface == PHY_INTERFACE_MODE_10GBASER))
 		rtl9300_serdes_setup(port, sds_num, state->interface);
 }
@@ -1343,7 +1352,11 @@ void rtl83xx_fast_age(struct dsa_switch *ds, int port)
 	mutex_unlock(&priv->reg_mutex);
 }
 
+<<<<<<< HEAD
 static void rtl931x_fast_age(struct dsa_switch *ds, int port)
+=======
+void rtl931x_fast_age(struct dsa_switch *ds, int port)
+>>>>>>> upstream/master
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
 
@@ -1358,7 +1371,11 @@ static void rtl931x_fast_age(struct dsa_switch *ds, int port)
 	mutex_unlock(&priv->reg_mutex);
 }
 
+<<<<<<< HEAD
 static void rtl930x_fast_age(struct dsa_switch *ds, int port)
+=======
+void rtl930x_fast_age(struct dsa_switch *ds, int port)
+>>>>>>> upstream/master
 {
 	struct rtl838x_switch_priv *priv = ds->priv;
 
@@ -1761,6 +1778,7 @@ static int rtl83xx_port_fdb_dump(struct dsa_switch *ds, int port,
 	return 0;
 }
 
+<<<<<<< HEAD
 static bool rtl83xx_mac_is_unsnoop(const unsigned char *addr)
 {
 	/*
@@ -1779,6 +1797,8 @@ static bool rtl83xx_mac_is_unsnoop(const unsigned char *addr)
 	return false;
 }
 
+=======
+>>>>>>> upstream/master
 static int rtl83xx_port_mdb_add(struct dsa_switch *ds, int port,
 				const struct switchdev_obj_port_mdb *mdb,
 				const struct dsa_db db)
@@ -1801,6 +1821,7 @@ static int rtl83xx_port_mdb_add(struct dsa_switch *ds, int port,
 		return -EINVAL;
 	}
 
+<<<<<<< HEAD
 	if (rtl83xx_mac_is_unsnoop(mdb->addr)) {
 		dev_dbg(priv->dev,
 			"%s: %pM might belong to an unsnoopable IP. ignore\n",
@@ -1808,6 +1829,8 @@ static int rtl83xx_port_mdb_add(struct dsa_switch *ds, int port,
 		return -EADDRNOTAVAIL;
 	}
 
+=======
+>>>>>>> upstream/master
 	mutex_lock(&priv->reg_mutex);
 
 	idx = rtl83xx_find_l2_hash_entry(priv, seed, false, &e);
@@ -1862,7 +1885,11 @@ out:
 	return err;
 }
 
+<<<<<<< HEAD
 static int rtl83xx_port_mdb_del(struct dsa_switch *ds, int port,
+=======
+int rtl83xx_port_mdb_del(struct dsa_switch *ds, int port,
+>>>>>>> upstream/master
 			 const struct switchdev_obj_port_mdb *mdb,
 			 const struct dsa_db db)
 {
@@ -1881,6 +1908,7 @@ static int rtl83xx_port_mdb_del(struct dsa_switch *ds, int port,
 		return 0;
 	}
 
+<<<<<<< HEAD
 	if (rtl83xx_mac_is_unsnoop(mdb->addr)) {
 		dev_dbg(priv->dev,
 			"%s: %pM might belong to an unsnoopable IP. ignore\n",
@@ -1888,6 +1916,8 @@ static int rtl83xx_port_mdb_del(struct dsa_switch *ds, int port,
 		return 0;
 	}
 
+=======
+>>>>>>> upstream/master
 	mutex_lock(&priv->reg_mutex);
 
 	idx = rtl83xx_find_l2_hash_entry(priv, seed, true, &e);
@@ -2171,7 +2201,11 @@ out:
 	return 0;
 }
 
+<<<<<<< HEAD
 static int rtl83xx_dsa_phy_read(struct dsa_switch *ds, int phy_addr, int phy_reg)
+=======
+int dsa_phy_read(struct dsa_switch *ds, int phy_addr, int phy_reg)
+>>>>>>> upstream/master
 {
 	u32 val;
 	u32 offset = 0;
@@ -2190,7 +2224,11 @@ static int rtl83xx_dsa_phy_read(struct dsa_switch *ds, int phy_addr, int phy_reg
 	return val;
 }
 
+<<<<<<< HEAD
 static int rtl83xx_dsa_phy_write(struct dsa_switch *ds, int phy_addr, int phy_reg, u16 val)
+=======
+int dsa_phy_write(struct dsa_switch *ds, int phy_addr, int phy_reg, u16 val)
+>>>>>>> upstream/master
 {
 	u32 offset = 0;
 	struct rtl838x_switch_priv *priv = ds->priv;
@@ -2217,8 +2255,13 @@ const struct dsa_switch_ops rtl83xx_switch_ops = {
 	.get_tag_protocol	= rtl83xx_get_tag_protocol,
 	.setup			= rtl83xx_setup,
 
+<<<<<<< HEAD
 	.phy_read		= rtl83xx_dsa_phy_read,
 	.phy_write		= rtl83xx_dsa_phy_write,
+=======
+	.phy_read		= dsa_phy_read,
+	.phy_write		= dsa_phy_write,
+>>>>>>> upstream/master
 
 	.phylink_get_caps	= rtl83xx_phylink_get_caps,
 	.phylink_mac_config	= rtl83xx_phylink_mac_config,
@@ -2275,8 +2318,13 @@ const struct dsa_switch_ops rtl930x_switch_ops = {
 	.get_tag_protocol	= rtl83xx_get_tag_protocol,
 	.setup			= rtl93xx_setup,
 
+<<<<<<< HEAD
 	.phy_read		= rtl83xx_dsa_phy_read,
 	.phy_write		= rtl83xx_dsa_phy_write,
+=======
+	.phy_read		= dsa_phy_read,
+	.phy_write		= dsa_phy_write,
+>>>>>>> upstream/master
 
 	.phylink_get_caps	= rtl83xx_phylink_get_caps,
 	.phylink_mac_config	= rtl93xx_phylink_mac_config,

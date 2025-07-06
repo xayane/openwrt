@@ -75,12 +75,18 @@ inline void rtl_table_data_w(struct table_reg *r, u32 v, int i);
 
 void __init rtl83xx_setup_qos(struct rtl838x_switch_priv *priv);
 
+<<<<<<< HEAD
 void rtl83xx_fast_age(struct dsa_switch *ds, int port);
 int rtl83xx_packet_cntr_alloc(struct rtl838x_switch_priv *priv);
 int rtl83xx_port_get_stp_state(struct rtl838x_switch_priv *priv, int port);
 int rtl83xx_port_is_under(const struct net_device * dev, struct rtl838x_switch_priv *priv);
 void rtl83xx_port_stp_state_set(struct dsa_switch *ds, int port, u8 state);
 int rtl83xx_setup_tc(struct net_device *dev, enum tc_setup_type type, void *type_data);
+=======
+int rtl83xx_packet_cntr_alloc(struct rtl838x_switch_priv *priv);
+
+int rtl83xx_port_is_under(const struct net_device * dev, struct rtl838x_switch_priv *priv);
+>>>>>>> upstream/master
 
 int read_phy(u32 port, u32 page, u32 reg, u32 *val);
 int write_phy(u32 port, u32 page, u32 reg, u32 val);
@@ -125,13 +131,19 @@ irqreturn_t rtl930x_switch_irq(int irq, void *dev_id);
 irqreturn_t rtl839x_switch_irq(int irq, void *dev_id);
 void rtl930x_vlan_profile_dump(int index);
 int rtl9300_sds_power(int mac, int val);
+<<<<<<< HEAD
 extern int rtl9300_serdes_setup(int port, int sds_num, phy_interface_t phy_mode);
+=======
+void rtl9300_sds_rst(int sds_num, u32 mode);
+int rtl9300_serdes_setup(int port, int sds_num, phy_interface_t phy_mode);
+>>>>>>> upstream/master
 void rtl930x_print_matrix(void);
 
 /* RTL931x-specific */
 irqreturn_t rtl931x_switch_irq(int irq, void *dev_id);
 int rtl931x_sds_cmu_band_get(int sds, phy_interface_t mode);
 int rtl931x_sds_cmu_band_set(int sds, bool enable, u32 band, phy_interface_t mode);
+<<<<<<< HEAD
 extern void rtl931x_sds_init(u32 sds, phy_interface_t mode);
 
 int rtl83xx_lag_add(struct dsa_switch *ds, int group, int port, struct netdev_lag_upper_info *info);
@@ -170,5 +182,11 @@ void rtl930x_pie_rule_dump_raw(u32 r[]);
 void rtl931x_print_matrix(void);
 void rtl931x_set_receive_management_action(int port, rma_ctrl_t type, action_type_t action);
 void rtl931x_sw_init(struct rtl838x_switch_priv *priv);
+=======
+void rtl931x_sds_init(u32 sds, phy_interface_t mode);
+
+int rtl83xx_lag_add(struct dsa_switch *ds, int group, int port, struct netdev_lag_upper_info *info);
+int rtl83xx_lag_del(struct dsa_switch *ds, int group, int port);
+>>>>>>> upstream/master
 
 #endif /* _NET_DSA_RTL83XX_H */

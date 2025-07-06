@@ -113,8 +113,13 @@ define Device/qnap_qhora-321
   SOC := cn9131
   DEVICE_VENDOR := QNAP
   DEVICE_MODEL := QHora-321
+<<<<<<< HEAD
   DEVICE_PACKAGES += kmod-rtc-ds1307
   DEVICE_DTS := cn9131-db-A cn9131-puzzle-m901
+=======
+  DEVICE_DTS := cn9131-qhora-321
+  DEVICE_PACKAGES += kmod-rtc-ds1307
+>>>>>>> upstream/master
 endef
 TARGET_DEVICES += qnap_qhora-321
 
@@ -123,6 +128,7 @@ define Device/qnap_qhora-322
   SOC := cn9132
   DEVICE_VENDOR := QNAP
   DEVICE_MODEL := QHora-322
+<<<<<<< HEAD
   DEVICE_PACKAGES += kmod-rtc-ds1307
   DEVICE_DTS := cn9132-db-A cn9132-puzzle-m902
 endef
@@ -139,6 +145,13 @@ define Device/qnap_qhora-32x
 endef
 TARGET_DEVICES += qnap_qhora-32x 
 
+=======
+  DEVICE_DTS := cn9132-qhora-322
+  DEVICE_PACKAGES += kmod-rtc-ds1307
+endef
+TARGET_DEVICES += qnap_qhora-322
+
+>>>>>>> upstream/master
 define Device/solidrun_clearfog-pro
   $(call Device/Default-arm64)
   SOC := cn9130

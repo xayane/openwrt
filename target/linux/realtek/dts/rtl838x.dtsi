@@ -252,7 +252,11 @@
 
 	switchcore@1b000000 {
 		compatible = "syscon", "simple-mfd";
+<<<<<<< HEAD
 		reg = <0x1b000000 0x10000>;
+=======
+		reg = <0x1b000000 0x20000>;
+>>>>>>> upstream/master
 
 		mdio_aux: mdio-aux {
 			compatible = "realtek,rtl8380-aux-mdio";
@@ -264,11 +268,14 @@
 			pinctrl-names = "default";
 			pinctrl-0 = <&mdio_aux_mdx>, <&aux_mode_mdio>;
 		};
+<<<<<<< HEAD
 
 		soc_thermal: thermal {
 			compatible = "realtek,rtl8380-thermal";
 			#thermal-sensor-cells = <0>;
 		};
+=======
+>>>>>>> upstream/master
 	};
 
 	pinmux@1b000144 {
@@ -368,6 +375,7 @@
 
 		interrupt-parent = <&intc>;
 		interrupts = <20 2>;
+<<<<<<< HEAD
 	};
 
 	thermal_zones: thermal-zones {
@@ -384,5 +392,7 @@
 				};
 			};
 		};
+=======
+>>>>>>> upstream/master
 	};
 };

@@ -349,6 +349,7 @@ static int __init rtl83xx_mdio_probe(struct rtl838x_switch_priv *priv)
 			continue;
 
 		phy_node = of_parse_phandle(dn, "phy-handle", 0);
+<<<<<<< HEAD
 
 		/* Major cleanup is needed...
 		 *
@@ -365,6 +366,8 @@ static int __init rtl83xx_mdio_probe(struct rtl838x_switch_priv *priv)
 		if (!phy_node)
 			phy_node = of_parse_phandle(dn, "pseudo-phy-handle", 0);
 
+=======
+>>>>>>> upstream/master
 		if (!phy_node) {
 			if (pn != priv->cpu_port)
 				dev_err(priv->dev, "Port node %d misses phy-handle\n", pn);
@@ -627,7 +630,11 @@ int rtl83xx_packet_cntr_alloc(struct rtl838x_switch_priv *priv)
  * Called from the L3 layer
  * The index in the L2 hash table is filled into nh->l2_id;
  */
+<<<<<<< HEAD
 static int rtl83xx_l2_nexthop_add(struct rtl838x_switch_priv *priv, struct rtl83xx_nexthop *nh)
+=======
+int rtl83xx_l2_nexthop_add(struct rtl838x_switch_priv *priv, struct rtl83xx_nexthop *nh)
+>>>>>>> upstream/master
 {
 	struct rtl838x_l2_entry e;
 	u64 seed = priv->r->l2_hash_seed(nh->mac, nh->rvid);
@@ -694,7 +701,11 @@ static int rtl83xx_l2_nexthop_add(struct rtl838x_switch_priv *priv, struct rtl83
  * If it was static, the entire entry is removed, otherwise the nexthop bit is cleared
  * and we wait until the entry ages out
  */
+<<<<<<< HEAD
 static int rtl83xx_l2_nexthop_rm(struct rtl838x_switch_priv *priv, struct rtl83xx_nexthop *nh)
+=======
+int rtl83xx_l2_nexthop_rm(struct rtl838x_switch_priv *priv, struct rtl83xx_nexthop *nh)
+>>>>>>> upstream/master
 {
 	struct rtl838x_l2_entry e;
 	u32 key = nh->l2_id >> 2;
@@ -819,7 +830,11 @@ static int rtl83xx_netdevice_event(struct notifier_block *this,
 	return NOTIFY_DONE;
 }
 
+<<<<<<< HEAD
 static const struct rhashtable_params route_ht_params = {
+=======
+const static struct rhashtable_params route_ht_params = {
+>>>>>>> upstream/master
 	.key_len     = sizeof(u32),
 	.key_offset  = offsetof(struct rtl83xx_route, gw_ip),
 	.head_offset = offsetof(struct rtl83xx_route, linkage),
@@ -839,12 +854,20 @@ static int rtl83xx_l3_nexthop_update(struct rtl838x_switch_priv *priv,  __be32 i
 	}
 
 	rhl_for_each_entry_rcu(r, tmp, list, linkage) {
+<<<<<<< HEAD
 		pr_debug("%s: Setting up fwding: ip %pI4, GW mac %016llx\n",
+=======
+		pr_info("%s: Setting up fwding: ip %pI4, GW mac %016llx\n",
+>>>>>>> upstream/master
 			__func__, &ip_addr, mac);
 
 		/* Reads the ROUTING table entry associated with the route */
 		priv->r->route_read(r->id, r);
+<<<<<<< HEAD
 		pr_debug("Route with id %d to %pI4 / %d\n", r->id, &r->dst_ip, r->prefix_len);
+=======
+		pr_info("Route with id %d to %pI4 / %d\n", r->id, &r->dst_ip, r->prefix_len);
+>>>>>>> upstream/master
 
 		r->nh.mac = r->nh.gw = mac;
 		r->nh.port = priv->port_ignore;
@@ -891,7 +914,11 @@ static int rtl83xx_l3_nexthop_update(struct rtl838x_switch_priv *priv,  __be32 i
 			priv->r->pie_rule_add(priv, &r->pr);
 		} else {
 			int pkts = priv->r->packet_cntr_read(r->pr.packet_cntr);
+<<<<<<< HEAD
 			pr_debug("%s: total packets: %d\n", __func__, pkts);
+=======
+			pr_info("%s: total packets: %d\n", __func__, pkts);
+>>>>>>> upstream/master
 
 			priv->r->pie_rule_write(priv, r->pr.id, &r->pr);
 		}
@@ -954,7 +981,11 @@ static int rtl83xx_port_lower_walk(struct net_device *lower, struct netdev_neste
 	return ret;
 }
 
+<<<<<<< HEAD
 static int rtl83xx_port_dev_lower_find(struct net_device *dev, struct rtl838x_switch_priv *priv)
+=======
+int rtl83xx_port_dev_lower_find(struct net_device *dev, struct rtl838x_switch_priv *priv)
+>>>>>>> upstream/master
 {
 	struct rtl83xx_walk_data data;
 	struct netdev_nested_priv _priv;
@@ -1728,10 +1759,19 @@ err_register_nb:
 	return err;
 }
 
+<<<<<<< HEAD
 static void rtl83xx_sw_remove(struct platform_device *pdev)
 {
 	/* TODO: */
 	pr_debug("Removing platform driver for rtl83xx-sw\n");
+=======
+static int rtl83xx_sw_remove(struct platform_device *pdev)
+{
+	/* TODO: */
+	pr_debug("Removing platform driver for rtl83xx-sw\n");
+
+	return 0;
+>>>>>>> upstream/master
 }
 
 static const struct of_device_id rtl83xx_switch_of_ids[] = {
@@ -1744,7 +1784,11 @@ MODULE_DEVICE_TABLE(of, rtl83xx_switch_of_ids);
 
 static struct platform_driver rtl83xx_switch_driver = {
 	.probe = rtl83xx_sw_probe,
+<<<<<<< HEAD
 	.remove_new = rtl83xx_sw_remove,
+=======
+	.remove = rtl83xx_sw_remove,
+>>>>>>> upstream/master
 	.driver = {
 		.name = "rtl83xx-switch",
 		.pm = NULL,
