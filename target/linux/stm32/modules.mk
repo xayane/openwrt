@@ -190,8 +190,6 @@ endef
 $(eval $(call KernelPackage,stm32-dcmi))
 
 
-<<<<<<< HEAD
-=======
 define KernelPackage/stm32-dcmipp
   TITLE:=STM32 Digital Camera Memory Interface Pixel Processor (DCMIPP) support
   KCONFIG:=CONFIG_VIDEO_STM32_DCMIPP
@@ -206,7 +204,6 @@ endef
 $(eval $(call KernelPackage,stm32-dcmipp))
 
 
->>>>>>> upstream/master
 define KernelPackage/stm32-dfsdm-adc
   TITLE:=STM32 DFSDM ADC
   KCONFIG:=CONFIG_STM32_DFSDM_CORE \
@@ -214,15 +211,11 @@ define KernelPackage/stm32-dfsdm-adc
   FILES:=$(LINUX_DIR)/drivers/iio/adc/stm32-dfsdm-core.ko \
 	 $(LINUX_DIR)/drivers/iio/adc/stm32-dfsdm-adc.ko
   AUTOLOAD:=$(call AutoProbe,stm32-dfsdm-core stm32-dfsdm-adc)
-<<<<<<< HEAD
-  $(call AddDepends/iio,@TARGET_stm32 +kmod-stm32-timer-trigger +kmod-industrialio-triggered-buffer +kmod-industrialio-hw-consumer)
-=======
   $(call AddDepends/iio,@TARGET_stm32 \
 	  +kmod-stm32-timer-trigger \
 	  +kmod-industrialio-triggered-buffer \
 	  +kmod-industrialio-hw-consumer \
 	  +kmod-industrialio-backend)
->>>>>>> upstream/master
 endef
 
 $(eval $(call KernelPackage,stm32-dfsdm-adc))

@@ -59,16 +59,6 @@ define Device/d-link_dgs-1210-20
 endef
 TARGET_DEVICES += d-link_dgs-1210-20
 
-<<<<<<< HEAD
-define Device/d-link_dgs-1210-26
-  $(Device/d-link_dgs-1210)
-  SOC := rtl8382
-  DEVICE_MODEL := DGS-1210-26
-endef
-TARGET_DEVICES += d-link_dgs-1210-26
-
-=======
->>>>>>> upstream/master
 define Device/d-link_dgs-1210-28
   $(Device/d-link_dgs-1210)
   SOC := rtl8382
@@ -94,27 +84,6 @@ define Device/d-link_dgs-1210-28p-f
 endef
 TARGET_DEVICES += d-link_dgs-1210-28p-f
 
-<<<<<<< HEAD
-define Device/engenius_ews2910p-v1
-  $(Device/engenius_ews2910p)
-  SOC := rtl8380
-  DEVICE_MODEL := EWS2910P
-  DEVICE_VARIANT := v1
-  DEVICE_PACKAGES += realtek-poe
-  UIMAGE_MAGIC := 0x03802910
-  SUPPORTED_DEVICES += engenius,ews2910p
-endef
-TARGET_DEVICES += engenius_ews2910p-v1
-
-define Device/engenius_ews2910p-v3
-  $(Device/engenius_ews2910p)
-  SOC := rtl8380
-  DEVICE_MODEL := EWS2910P
-  DEVICE_VARIANT := v3
-  UIMAGE_MAGIC := 0x03010500
-endef
-TARGET_DEVICES += engenius_ews2910p-v3
-=======
 # The "IMG-" uImage name allows flashing the iniramfs from the vendor Web UI.
 # Avoided for sysupgrade, as the vendor FW would do an incomplete flash.
 define Device/engenius_ews2910p
@@ -131,7 +100,6 @@ define Device/engenius_ews2910p
 	uImage gzip -n 'IMG-0.00.00-c0.0.00'
 endef
 TARGET_DEVICES += engenius_ews2910p
->>>>>>> upstream/master
 
 define Device/hpe_1920-8g
   $(Device/hpe_1920)

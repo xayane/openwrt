@@ -153,11 +153,7 @@
 		port@52 {
 			ethernet = <&ethernet0>;
 			reg = <52>;
-<<<<<<< HEAD
-			phy-mode = "internal";
-=======
 			phy-mode = "qsgmii";
->>>>>>> upstream/master
 			fixed-link {
 				speed = <1000>;
 				full-duplex;

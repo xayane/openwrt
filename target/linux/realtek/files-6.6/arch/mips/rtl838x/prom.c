@@ -19,10 +19,6 @@
 #include <asm/page.h>
 #include <asm/cpu.h>
 #include <asm/fw/fw.h>
-<<<<<<< HEAD
-#include <asm/prom.h>
-=======
->>>>>>> upstream/master
 #include <asm/smp-ops.h>
 #include <asm/mips-cps.h>
 
@@ -80,30 +76,9 @@ void __init device_tree_init(void)
 	}
 	initial_boot_params = (void *)fdt;
 	unflatten_and_copy_device_tree();
-
-<<<<<<< HEAD
-	/* delay cpc & smp probing to allow devicetree access */
-	mips_cpc_probe();
-
-	if (!register_cps_smp_ops())
-		return;
-
-#ifdef CONFIG_MIPS_MT_SMP
-	if (cpu_has_mipsmt) {
-		rtl_smp_ops = vsmp_smp_ops;
-		rtl_smp_ops.init_secondary = rtl_init_secondary;
-		register_smp_ops(&rtl_smp_ops);
-		return;
-	}
-#endif
-
-	register_up_smp_ops();
 }
 
-static void __init identify_rtl9302(void)
-=======
 void __init identify_rtl9302(void)
->>>>>>> upstream/master
 {
 	switch (sw_r32(RTL93XX_MODEL_NAME_INFO) & 0xfffffff0) {
 	case 0x93020810:
@@ -206,13 +181,6 @@ void __init prom_init(void)
 		soc_info.name = "RTL9303";
 		soc_info.family = RTL9300_FAMILY_ID;
 		break;
-<<<<<<< HEAD
-	case 0x9311:
-		soc_info.name = "RTL9311";
-		soc_info.family = RTL9310_FAMILY_ID;
-		break;
-=======
->>>>>>> upstream/master
 	case 0x9313:
 		soc_info.name = "RTL9313";
 		soc_info.family = RTL9310_FAMILY_ID;
@@ -224,17 +192,6 @@ void __init prom_init(void)
 
 	pr_info("SoC Type: %s\n", get_system_type());
 
-<<<<<<< HEAD
-	/*
-	 * fw_arg2 is be the pointer to the environment. Some devices (e.g. HP JG924A) hand
-	 * over other than expected kernel boot arguments. Something like 0xfffdffff looks
-	 * suspicous. Do extra cleanup for fw_init_cmdline() to avoid a hang during boot.
-	 */
-	if (fw_arg2 >= CKSEG2)
-		fw_arg2 = 0;
-
-	fw_init_cmdline();
-=======
 	fw_init_cmdline();
 
 	mips_cpc_probe();
@@ -252,5 +209,4 @@ void __init prom_init(void)
 #endif
 
 	register_up_smp_ops();
->>>>>>> upstream/master
 }

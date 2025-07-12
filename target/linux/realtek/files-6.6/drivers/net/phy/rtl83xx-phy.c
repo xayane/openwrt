@@ -147,11 +147,7 @@ static int resume_polling(u64 saved_state)
 	return 0;
 }
 
-<<<<<<< HEAD
-static int rtl821x_match_phy_device(struct phy_device *phydev)
-=======
 int rtl821x_match_phy_device(struct phy_device *phydev)
->>>>>>> upstream/master
 {
 	u64 poll_state;
 	int rawpage, port = phydev->mdio.addr & ~3;
@@ -229,8 +225,6 @@ static void rtl8380_int_phy_on_off(struct phy_device *phydev, bool on)
 	phy_modify(phydev, 0, BMCR_PDOWN, on ? 0 : BMCR_PDOWN);
 }
 
-<<<<<<< HEAD
-=======
 static void rtl8380_rtl8214fc_on_off(struct phy_device *phydev, bool on)
 {
 	/* fiber ports */
@@ -242,7 +236,6 @@ static void rtl8380_rtl8214fc_on_off(struct phy_device *phydev, bool on)
 	phy_modify_paged(phydev, RTL821X_PAGE_POWER, 0x10, BMCR_PDOWN, on ? 0 : BMCR_PDOWN);
 }
 
->>>>>>> upstream/master
 static void rtl8380_phy_reset(struct phy_device *phydev)
 {
 	phy_modify(phydev, 0, BMCR_RESET, BMCR_RESET);
@@ -256,11 +249,7 @@ u8  rtl9300_sds_lsb[]  = { 0, 6, 12, 18, 0, 6, 12, 18, 0, 6, 0, 6};
 /* Reset the SerDes by powering it off and set a new operation mode
  * of the SerDes.
  */
-<<<<<<< HEAD
-static void rtl9300_sds_rst(int sds_num, u32 mode)
-=======
 void rtl9300_sds_rst(int sds_num, u32 mode)
->>>>>>> upstream/master
 {
 	pr_info("%s %d\n", __func__, mode);
 	if (sds_num < 0 || sds_num > 11) {
@@ -297,11 +286,7 @@ void rtl9300_sds_set(int sds_num, u32 mode)
 	         sw_r32(0x194), sw_r32(0x198), sw_r32(0x2a0), sw_r32(0x2a4));
 }
 
-<<<<<<< HEAD
-static u32 rtl9300_sds_mode_get(int sds_num)
-=======
 u32 rtl9300_sds_mode_get(int sds_num)
->>>>>>> upstream/master
 {
 	u32 v;
 
@@ -448,8 +433,6 @@ int rtl931x_write_sds_phy(int phy_addr, int page, int phy_reg, u16 v)
 	return 0;
 }
 
-<<<<<<< HEAD
-=======
 /* On the RTL838x SoCs, the internal SerDes is accessed through direct access to
  * standard PHY registers, where a 32 bit register holds a 16 bit word as found
  * in a standard page 0 of a PHY
@@ -466,7 +449,6 @@ int rtl838x_read_sds_phy(int phy_addr, int phy_reg)
 	return val;
 }
 
->>>>>>> upstream/master
 int rtl839x_write_sds_phy(int phy_addr, int phy_reg, u16 v)
 {
 	int offset = 0;
@@ -1046,19 +1028,6 @@ static bool rtl8214fc_media_is_fibre(struct phy_device *phydev)
 
 static void rtl8214fc_power_set(struct phy_device *phydev, int port, bool on)
 {
-<<<<<<< HEAD
-	int page = port == PORT_FIBRE ? RTL821X_MEDIA_PAGE_FIBRE : RTL821X_MEDIA_PAGE_COPPER;
-	int pdown = on ? 0 : BMCR_PDOWN;
-
-	pr_info("%s: Powering %s %s (port %d)\n", __func__,
-		on ? "on" : "off",
-		port == PORT_FIBRE ? "FIBRE" : "COPPER",
-		phydev->mdio.addr);
-
-	phy_write(phydev, RTL821XINT_MEDIA_PAGE_SELECT, page);
-	phy_modify_paged(phydev, RTL821X_PAGE_POWER, 0x10, BMCR_PDOWN, pdown);
-	phy_write(phydev, RTL821XINT_MEDIA_PAGE_SELECT, RTL821X_MEDIA_PAGE_AUTO);
-=======
 	char *state = on ? "on" : "off";
 
 	if (port == PORT_FIBRE) {
@@ -1076,7 +1045,6 @@ static void rtl8214fc_power_set(struct phy_device *phydev, int port, bool on)
 	}
 
 	phy_write_paged(phydev, RTL838X_PAGE_RAW, RTL821XINT_MEDIA_PAGE_SELECT, RTL821X_MEDIA_PAGE_AUTO);
->>>>>>> upstream/master
 }
 
 static int rtl8214fc_suspend(struct phy_device *phydev)
@@ -1133,34 +1101,6 @@ static void rtl8214fc_media_set(struct phy_device *phydev, bool set_fibre)
 	}
 }
 
-<<<<<<< HEAD
-static int rtl8214fc_set_tunable(struct phy_device *phydev,
-				 struct ethtool_tunable *tuna, const void *data)
-{
-	/*
-	 * The RTL8214FC driver usually detects insertion of SFP modules and automatically toggles
-	 * between copper and fiber. There may be cases where the user wants to switch the port on
-	 * demand. Usually ethtool offers to change the port of a multiport network card with
-	 * "ethtool -s lan25 port fibre/tp" if the driver supports it. This does not work for
-	 * attached phys. For more details see phy_ethtool_ksettings_set(). To avoid patching the
-	 * kernel misuse the phy downshift tunable to offer that feature. For this use
-	 * "ethtool --set-phy-tunable lan25 downshift on/off".
-	 */
-	switch (tuna->id) {
-	case ETHTOOL_PHY_DOWNSHIFT:
-		rtl8214fc_media_set(phydev, !rtl8214fc_media_is_fibre(phydev));
-		return 0;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
-
-static int rtl8214fc_get_tunable(struct phy_device *phydev,
-				 struct ethtool_tunable *tuna, void *data)
-{
-	/* Needed to make rtl8214fc_set_tunable() work */
-	return 0;
-=======
 static int rtl8214fc_set_port(struct phy_device *phydev, int port)
 {
 	bool is_fibre = (port == PORT_FIBRE ? true : false);
@@ -1182,7 +1122,6 @@ static int rtl8214fc_get_port(struct phy_device *phydev)
 		return PORT_FIBRE;
 
 	return PORT_MII;
->>>>>>> upstream/master
 }
 
 static int rtl8214fc_get_features(struct phy_device *phydev)
@@ -1236,11 +1175,7 @@ static int rtl8214fc_config_aneg(struct phy_device *phydev)
  * but the only way that works since the kernel first enables EEE in the MAC
  * and then sets up the PHY. The MAC-based approach would require the oppsite.
  */
-<<<<<<< HEAD
-static void rtl8218d_eee_set(struct phy_device *phydev, bool enable)
-=======
 void rtl8218d_eee_set(struct phy_device *phydev, bool enable)
->>>>>>> upstream/master
 {
 	u32 val;
 	bool an_enabled;
@@ -1528,16 +1463,9 @@ static int rtl8380_configure_rtl8214fc(struct phy_device *phydev)
 	val = phy_read_paged(phydev, RTL838X_PAGE_RAW, 28);
 
 	val = phy_read(phydev, 16);
-<<<<<<< HEAD
-	if (val & BMCR_PDOWN) {
-		rtl8214fc_power_set(phydev, PORT_MII, true);
-		rtl8214fc_power_set(phydev, PORT_FIBRE, true);
-	} else
-=======
 	if (val & BMCR_PDOWN)
 		rtl8380_rtl8214fc_on_off(phydev, true);
 	else
->>>>>>> upstream/master
 		rtl8380_phy_reset(phydev);
 
 	msleep(100);
@@ -1767,11 +1695,7 @@ static int rtl8390_configure_serdes(struct phy_device *phydev)
 	return 0;
 }
 
-<<<<<<< HEAD
-static void rtl9300_sds_field_w(int sds, u32 page, u32 reg, int end_bit, int start_bit, u32 v)
-=======
 void rtl9300_sds_field_w(int sds, u32 page, u32 reg, int end_bit, int start_bit, u32 v)
->>>>>>> upstream/master
 {
 	int l = end_bit - start_bit + 1;
 	u32 data = v;
@@ -1787,11 +1711,7 @@ void rtl9300_sds_field_w(int sds, u32 page, u32 reg, int end_bit, int start_bit,
 	rtl930x_write_sds_phy(sds, page, reg, data);
 }
 
-<<<<<<< HEAD
-static u32 rtl9300_sds_field_r(int sds, u32 page, u32 reg, int end_bit, int start_bit)
-=======
 u32 rtl9300_sds_field_r(int sds, u32 page, u32 reg, int end_bit, int start_bit)
->>>>>>> upstream/master
 {
 	int l = end_bit - start_bit + 1;
 	u32 v = rtl930x_read_sds_phy(sds, page, reg);
@@ -1816,11 +1736,7 @@ static int rtl9300_read_status(struct phy_device *phydev)
 
 		if (of_property_read_u32(dn, "sds", &sds_num))
 			sds_num = -1;
-<<<<<<< HEAD
-		pr_debug("%s: Port %d, SerDes is %d\n", __func__, phy_addr, sds_num);
-=======
 		pr_info("%s: Port %d, SerDes is %d\n", __func__, phy_addr, sds_num);
->>>>>>> upstream/master
 	} else {
 		dev_err(dev, "No DT node.\n");
 		return -EINVAL;
@@ -1830,11 +1746,7 @@ static int rtl9300_read_status(struct phy_device *phydev)
 		return 0;
 
 	mode = rtl9300_sds_mode_get(sds_num);
-<<<<<<< HEAD
-	pr_debug("%s got SDS mode %02x\n", __func__, mode);
-=======
 	pr_info("%s got SDS mode %02x\n", __func__, mode);
->>>>>>> upstream/master
 	if (mode == RTL930X_SDS_OFF)
 		mode = rtl9300_sds_field_r(sds_num, 0x1f, 9, 11, 7);
 	if (mode == RTL930X_SDS_MODE_10GBASER) { /* 10GR mode */
@@ -1849,11 +1761,7 @@ static int rtl9300_read_status(struct phy_device *phydev)
 		latch_status |= rtl9300_sds_field_r(sds_num, 0x1, 30, 8, 0);
 	}
 
-<<<<<<< HEAD
-	pr_debug("%s link status: status: %d, latch %d\n", __func__, status, latch_status);
-=======
 	pr_info("%s link status: status: %d, latch %d\n", __func__, status, latch_status);
->>>>>>> upstream/master
 
 	if (latch_status) {
 		phydev->link = true;
@@ -1871,11 +1779,7 @@ static int rtl9300_read_status(struct phy_device *phydev)
 	return 0;
 }
 
-<<<<<<< HEAD
-static void rtl930x_sds_rx_rst(int sds_num, phy_interface_t phy_if)
-=======
 void rtl930x_sds_rx_rst(int sds_num, phy_interface_t phy_if)
->>>>>>> upstream/master
 {
 	int page = 0x2e; /* 10GR and USXGMII */
 
@@ -1889,11 +1793,7 @@ void rtl930x_sds_rx_rst(int sds_num, phy_interface_t phy_if)
 
 /* Force PHY modes on 10GBit Serdes
  */
-<<<<<<< HEAD
-static void rtl9300_force_sds_mode(int sds, phy_interface_t phy_if)
-=======
 void rtl9300_force_sds_mode(int sds, phy_interface_t phy_if)
->>>>>>> upstream/master
 {
 	int lc_value;
 	int sds_mode;
@@ -2054,11 +1954,7 @@ void rtl9300_force_sds_mode(int sds, phy_interface_t phy_if)
 	pr_info("%s --------------------- serdes %d forced to %x DONE\n", __func__, sds, sds_mode);
 }
 
-<<<<<<< HEAD
-static void rtl9300_sds_tx_config(int sds, phy_interface_t phy_if)
-=======
 void rtl9300_sds_tx_config(int sds, phy_interface_t phy_if)
->>>>>>> upstream/master
 {
 	/* parameters: rtl9303_80G_txParam_s2 */
 	int impedance = 0x8;
@@ -2071,10 +1967,6 @@ void rtl9300_sds_tx_config(int sds, phy_interface_t phy_if)
 
 	switch(phy_if) {
 	case PHY_INTERFACE_MODE_1000BASEX:
-<<<<<<< HEAD
-	case PHY_INTERFACE_MODE_SGMII:
-=======
->>>>>>> upstream/master
 		pre_amp = 0x1;
 		main_amp = 0x9;
 		post_amp = 0x1;
@@ -2128,11 +2020,7 @@ int rtl9300_sds_clock_wait(int timeout)
 	return 1;
 }
 
-<<<<<<< HEAD
-static void rtl9300_serdes_mac_link_config(int sds, bool tx_normal, bool rx_normal)
-=======
 void rtl9300_serdes_mac_link_config(int sds, bool tx_normal, bool rx_normal)
->>>>>>> upstream/master
 {
 	u32 v10, v1;
 
@@ -2313,11 +2201,7 @@ void rtl9300_sds_rxcal_dcvs_get(u32 sds_num, u32 dcvs_id, u32 dcvs_list[])
 	dcvs_list[1] = dcvs_coef_bin;
 }
 
-<<<<<<< HEAD
-static void rtl9300_sds_rxcal_leq_manual(u32 sds_num, bool manual, u32 leq_gray)
-=======
 void rtl9300_sds_rxcal_leq_manual(u32 sds_num, bool manual, u32 leq_gray)
->>>>>>> upstream/master
 {
 	if (manual) {
 		rtl9300_sds_field_w(sds_num, 0x2e, 0x18, 15, 15, 0x1);
@@ -2328,11 +2212,7 @@ void rtl9300_sds_rxcal_leq_manual(u32 sds_num, bool manual, u32 leq_gray)
 	}
 }
 
-<<<<<<< HEAD
-static void rtl9300_sds_rxcal_leq_offset_manual(u32 sds_num, bool manual, u32 offset)
-=======
 void rtl9300_sds_rxcal_leq_offset_manual(u32 sds_num, bool manual, u32 offset)
->>>>>>> upstream/master
 {
 	if (manual) {
 		rtl9300_sds_field_w(sds_num, 0x2e, 0x17, 6, 2, offset);
@@ -2343,11 +2223,7 @@ void rtl9300_sds_rxcal_leq_offset_manual(u32 sds_num, bool manual, u32 offset)
 }
 
 #define GRAY_BITS 5
-<<<<<<< HEAD
-static u32 rtl9300_sds_rxcal_gray_to_binary(u32 gray_code)
-=======
 u32 rtl9300_sds_rxcal_gray_to_binary(u32 gray_code)
->>>>>>> upstream/master
 {
 	int i, j, m;
 	u32 g[GRAY_BITS];
@@ -2373,11 +2249,7 @@ u32 rtl9300_sds_rxcal_gray_to_binary(u32 gray_code)
 	return leq_binary;
 }
 
-<<<<<<< HEAD
-static u32 rtl9300_sds_rxcal_leq_read(int sds_num)
-=======
 u32 rtl9300_sds_rxcal_leq_read(int sds_num)
->>>>>>> upstream/master
 {
 	u32 leq_gray, leq_bin;
 	bool leq_manual;
@@ -2405,11 +2277,7 @@ u32 rtl9300_sds_rxcal_leq_read(int sds_num)
 	return leq_bin;
 }
 
-<<<<<<< HEAD
-static void rtl9300_sds_rxcal_vth_manual(u32 sds_num, bool manual, u32 vth_list[])
-=======
 void rtl9300_sds_rxcal_vth_manual(u32 sds_num, bool manual, u32 vth_list[])
->>>>>>> upstream/master
 {
 	if (manual) {
 		rtl9300_sds_field_w(sds_num, 0x2e, 0x0f, 13, 13, 0x1);
@@ -2421,11 +2289,7 @@ void rtl9300_sds_rxcal_vth_manual(u32 sds_num, bool manual, u32 vth_list[])
 	}
 }
 
-<<<<<<< HEAD
-static void rtl9300_sds_rxcal_vth_get(u32  sds_num, u32 vth_list[])
-=======
 void rtl9300_sds_rxcal_vth_get(u32  sds_num, u32 vth_list[])
->>>>>>> upstream/master
 {
 	u32 vth_manual;
 
@@ -2456,11 +2320,7 @@ void rtl9300_sds_rxcal_vth_get(u32  sds_num, u32 vth_list[])
 	pr_info("Vth Maunal = %d", vth_manual);
 }
 
-<<<<<<< HEAD
-static void rtl9300_sds_rxcal_tap_manual(u32 sds_num, int tap_id, bool manual, u32 tap_list[])
-=======
 void rtl9300_sds_rxcal_tap_manual(u32 sds_num, int tap_id, bool manual, u32 tap_list[])
->>>>>>> upstream/master
 {
 	if (manual) {
 		switch(tap_id) {
@@ -2507,11 +2367,7 @@ void rtl9300_sds_rxcal_tap_manual(u32 sds_num, int tap_id, bool manual, u32 tap_
 	}
 }
 
-<<<<<<< HEAD
-static void rtl9300_sds_rxcal_tap_get(u32 sds_num, u32 tap_id, u32 tap_list[])
-=======
 void rtl9300_sds_rxcal_tap_get(u32 sds_num, u32 tap_id, u32 tap_list[])
->>>>>>> upstream/master
 {
 	u32 tap0_sign_out;
 	u32 tap0_coef_bin;
@@ -2589,11 +2445,7 @@ void rtl9300_sds_rxcal_tap_get(u32 sds_num, u32 tap_id, u32 tap_list[])
 	}
 }
 
-<<<<<<< HEAD
-static void rtl9300_do_rx_calibration_1(int sds, phy_interface_t phy_mode)
-=======
 void rtl9300_do_rx_calibration_1(int sds, phy_interface_t phy_mode)
->>>>>>> upstream/master
 {
 	/* From both rtl9300_rxCaliConf_serdes_myParam and rtl9300_rxCaliConf_phy_myParam */
 	int tap0_init_val = 0x1f; /* Initial Decision Fed Equalizer 0 tap */
@@ -2669,13 +2521,7 @@ void rtl9300_do_rx_calibration_1(int sds, phy_interface_t phy_mode)
 
 	/* TODO: make this work for DAC cables of different lengths */
 	/* For a 10GBit serdes wit Fibre, SDS 8 or 9 */
-<<<<<<< HEAD
-	if (phy_mode == PHY_INTERFACE_MODE_10GBASER ||
-	    phy_mode == PHY_INTERFACE_MODE_1000BASEX ||
-	    phy_mode == PHY_INTERFACE_MODE_SGMII)
-=======
 	if (phy_mode == PHY_INTERFACE_MODE_10GBASER || PHY_INTERFACE_MODE_1000BASEX)
->>>>>>> upstream/master
 		rtl9300_sds_field_w(sds, 0x2e, 0x16,  3,  2, 0x02);
 	else
 		pr_err("%s not PHY-based or SerDes, implement DAC!\n", __func__);
@@ -2692,11 +2538,7 @@ void rtl9300_do_rx_calibration_1(int sds, phy_interface_t phy_mode)
 	pr_info("end_1.1.5\n");
 }
 
-<<<<<<< HEAD
-static void rtl9300_do_rx_calibration_2_1(u32 sds_num)
-=======
 void rtl9300_do_rx_calibration_2_1(u32 sds_num)
->>>>>>> upstream/master
 {
 	pr_info("start_1.2.1 ForegroundOffsetCal_Manual\n");
 
@@ -2709,11 +2551,7 @@ void rtl9300_do_rx_calibration_2_1(u32 sds_num)
 	pr_info("end_1.2.1");
 }
 
-<<<<<<< HEAD
-static void rtl9300_do_rx_calibration_2_2(int sds_num)
-=======
 void rtl9300_do_rx_calibration_2_2(int sds_num)
->>>>>>> upstream/master
 {
 	/* Force Rx-Run = 0 */
 	rtl9300_sds_field_w(sds_num, 0x2e, 0x15, 8, 8, 0x0);
@@ -2721,11 +2559,7 @@ void rtl9300_do_rx_calibration_2_2(int sds_num)
 	rtl930x_sds_rx_rst(sds_num, PHY_INTERFACE_MODE_10GBASER);
 }
 
-<<<<<<< HEAD
-static void rtl9300_do_rx_calibration_2_3(int sds_num)
-=======
 void rtl9300_do_rx_calibration_2_3(int sds_num)
->>>>>>> upstream/master
 {
 	u32 fgcal_binary, fgcal_gray;
 	u32 offset_range;
@@ -2772,11 +2606,7 @@ void rtl9300_do_rx_calibration_2_3(int sds_num)
 	pr_info("%s: end_1.2.3\n", __func__);
 }
 
-<<<<<<< HEAD
-static void rtl9300_do_rx_calibration_2(int sds)
-=======
 void rtl9300_do_rx_calibration_2(int sds)
->>>>>>> upstream/master
 {
 	rtl930x_sds_rx_rst(sds, PHY_INTERFACE_MODE_10GBASER);
 	rtl9300_do_rx_calibration_2_1(sds);
@@ -2784,22 +2614,12 @@ void rtl9300_do_rx_calibration_2(int sds)
 	rtl9300_do_rx_calibration_2_3(sds);
 }
 
-<<<<<<< HEAD
-static void rtl9300_sds_rxcal_3_1(int sds_num, phy_interface_t phy_mode)
-=======
 void rtl9300_sds_rxcal_3_1(int sds_num, phy_interface_t phy_mode)
->>>>>>> upstream/master
 {
 	pr_info("start_1.3.1");
 
 	/* ##1.3.1 */
-<<<<<<< HEAD
-	if (phy_mode != PHY_INTERFACE_MODE_10GBASER &&
-	    phy_mode != PHY_INTERFACE_MODE_1000BASEX &&
-	    phy_mode != PHY_INTERFACE_MODE_SGMII)
-=======
 	if (phy_mode != PHY_INTERFACE_MODE_10GBASER && phy_mode != PHY_INTERFACE_MODE_1000BASEX)
->>>>>>> upstream/master
 		rtl9300_sds_field_w(sds_num, 0x2e, 0xc, 8, 8, 0);
 
 	rtl9300_sds_field_w(sds_num, 0x2e, 0x17, 7, 7, 0x0);
@@ -2808,24 +2628,14 @@ void rtl9300_sds_rxcal_3_1(int sds_num, phy_interface_t phy_mode)
 	pr_info("end_1.3.1");
 }
 
-<<<<<<< HEAD
-static void rtl9300_sds_rxcal_3_2(int sds_num, phy_interface_t phy_mode)
-=======
 void rtl9300_sds_rxcal_3_2(int sds_num, phy_interface_t phy_mode)
->>>>>>> upstream/master
 {
 	u32 sum10 = 0, avg10, int10;
 	int dac_long_cable_offset;
 	bool eq_hold_enabled;
 	int i;
 
-<<<<<<< HEAD
-	if (phy_mode == PHY_INTERFACE_MODE_10GBASER ||
-	    phy_mode == PHY_INTERFACE_MODE_1000BASEX ||
-	    phy_mode == PHY_INTERFACE_MODE_SGMII) {
-=======
 	if (phy_mode == PHY_INTERFACE_MODE_10GBASER || phy_mode == PHY_INTERFACE_MODE_1000BASEX) {
->>>>>>> upstream/master
 		/* rtl9300_rxCaliConf_serdes_myParam */
 		dac_long_cable_offset = 3;
 		eq_hold_enabled = true;
@@ -2835,11 +2645,7 @@ void rtl9300_sds_rxcal_3_2(int sds_num, phy_interface_t phy_mode)
 		eq_hold_enabled = false;
 	}
 
-<<<<<<< HEAD
-	if (phy_mode != PHY_INTERFACE_MODE_10GBASER)
-=======
 	if (phy_mode == PHY_INTERFACE_MODE_1000BASEX)
->>>>>>> upstream/master
 		pr_warn("%s: LEQ only valid for 10GR!\n", __func__);
 
 	pr_info("start_1.3.2");
@@ -2854,13 +2660,7 @@ void rtl9300_sds_rxcal_3_2(int sds_num, phy_interface_t phy_mode)
 
 	pr_info("sum10:%u, avg10:%u, int10:%u", sum10, avg10, int10);
 
-<<<<<<< HEAD
-	if (phy_mode == PHY_INTERFACE_MODE_10GBASER ||
-	    phy_mode == PHY_INTERFACE_MODE_1000BASEX ||
-	    phy_mode == PHY_INTERFACE_MODE_SGMII) {
-=======
 	if (phy_mode == PHY_INTERFACE_MODE_10GBASER || phy_mode == PHY_INTERFACE_MODE_1000BASEX) {
->>>>>>> upstream/master
 		if (dac_long_cable_offset) {
 			rtl9300_sds_rxcal_leq_offset_manual(sds_num, 1, dac_long_cable_offset);
 			rtl9300_sds_field_w(sds_num, 0x2e, 0x17, 7, 7, eq_hold_enabled);
@@ -2890,21 +2690,11 @@ void rtl9300_do_rx_calibration_3(int sds_num, phy_interface_t phy_mode)
 {
 	rtl9300_sds_rxcal_3_1(sds_num, phy_mode);
 
-<<<<<<< HEAD
-	if (phy_mode == PHY_INTERFACE_MODE_10GBASER ||
-	    phy_mode == PHY_INTERFACE_MODE_1000BASEX ||
-	    phy_mode == PHY_INTERFACE_MODE_SGMII)
-		rtl9300_sds_rxcal_3_2(sds_num, phy_mode);
-}
-
-static void rtl9300_do_rx_calibration_4_1(int sds_num)
-=======
 	if (phy_mode == PHY_INTERFACE_MODE_10GBASER || phy_mode == PHY_INTERFACE_MODE_1000BASEX)
 		rtl9300_sds_rxcal_3_2(sds_num, phy_mode);
 }
 
 void rtl9300_do_rx_calibration_4_1(int sds_num)
->>>>>>> upstream/master
 {
 	u32 vth_list[2] = {0, 0};
 	u32 tap0_list[4] = {0, 0, 0, 0};
@@ -2919,11 +2709,7 @@ void rtl9300_do_rx_calibration_4_1(int sds_num)
 	pr_info("end_1.4.1");
 }
 
-<<<<<<< HEAD
-static void rtl9300_do_rx_calibration_4_2(u32 sds_num)
-=======
 void rtl9300_do_rx_calibration_4_2(u32 sds_num)
->>>>>>> upstream/master
 {
 	u32 vth_list[2];
 	u32 tap_list[4];
@@ -2941,21 +2727,13 @@ void rtl9300_do_rx_calibration_4_2(u32 sds_num)
 	pr_info("end_1.4.2");
 }
 
-<<<<<<< HEAD
-static void rtl9300_do_rx_calibration_4(u32 sds_num)
-=======
 void rtl9300_do_rx_calibration_4(u32 sds_num)
->>>>>>> upstream/master
 {
 	rtl9300_do_rx_calibration_4_1(sds_num);
 	rtl9300_do_rx_calibration_4_2(sds_num);
 }
 
-<<<<<<< HEAD
-static void rtl9300_do_rx_calibration_5_2(u32 sds_num)
-=======
 void rtl9300_do_rx_calibration_5_2(u32 sds_num)
->>>>>>> upstream/master
 {
 	u32 tap1_list[4] = {0};
 	u32 tap2_list[4] = {0};
@@ -2974,22 +2752,14 @@ void rtl9300_do_rx_calibration_5_2(u32 sds_num)
 	pr_info("end_1.5.2");
 }
 
-<<<<<<< HEAD
-static void rtl9300_do_rx_calibration_5(u32 sds_num, phy_interface_t phy_mode)
-=======
 void rtl9300_do_rx_calibration_5(u32 sds_num, phy_interface_t phy_mode)
->>>>>>> upstream/master
 {
 	if (phy_mode == PHY_INTERFACE_MODE_10GBASER) /* dfeTap1_4Enable true */
 		rtl9300_do_rx_calibration_5_2(sds_num);
 }
 
 
-<<<<<<< HEAD
-static void rtl9300_do_rx_calibration_dfe_disable(u32 sds_num)
-=======
 void rtl9300_do_rx_calibration_dfe_disable(u32 sds_num)
->>>>>>> upstream/master
 {
 	u32 tap1_list[4] = {0};
 	u32 tap2_list[4] = {0};
@@ -3004,11 +2774,7 @@ void rtl9300_do_rx_calibration_dfe_disable(u32 sds_num)
 	mdelay(10);
 }
 
-<<<<<<< HEAD
-static void rtl9300_do_rx_calibration(int sds, phy_interface_t phy_mode)
-=======
 void rtl9300_do_rx_calibration(int sds, phy_interface_t phy_mode)
->>>>>>> upstream/master
 {
 	u32 latch_sts;
 
@@ -3032,11 +2798,7 @@ void rtl9300_do_rx_calibration(int sds, phy_interface_t phy_mode)
 	}
 }
 
-<<<<<<< HEAD
-static int rtl9300_sds_sym_err_reset(int sds_num, phy_interface_t phy_mode)
-=======
 int rtl9300_sds_sym_err_reset(int sds_num, phy_interface_t phy_mode)
->>>>>>> upstream/master
 {
 	switch (phy_mode) {
 	case PHY_INTERFACE_MODE_XGMII:
@@ -3049,10 +2811,6 @@ int rtl9300_sds_sym_err_reset(int sds_num, phy_interface_t phy_mode)
 		break;
 
 	case PHY_INTERFACE_MODE_1000BASEX:
-<<<<<<< HEAD
-	case PHY_INTERFACE_MODE_SGMII:
-=======
->>>>>>> upstream/master
 		rtl9300_sds_field_w(sds_num, 0x1, 24, 2, 0, 0);
 		rtl9300_sds_field_w(sds_num, 0x1, 3, 15, 8, 0);
 		rtl9300_sds_field_w(sds_num, 0x1, 2, 15, 0, 0);
@@ -3066,11 +2824,7 @@ int rtl9300_sds_sym_err_reset(int sds_num, phy_interface_t phy_mode)
 	return 0;
 }
 
-<<<<<<< HEAD
-static u32 rtl9300_sds_sym_err_get(int sds_num, phy_interface_t phy_mode)
-=======
 u32 rtl9300_sds_sym_err_get(int sds_num, phy_interface_t phy_mode)
->>>>>>> upstream/master
 {
 	u32 v = 0;
 
@@ -3079,10 +2833,6 @@ u32 rtl9300_sds_sym_err_get(int sds_num, phy_interface_t phy_mode)
 		break;
 
 	case PHY_INTERFACE_MODE_1000BASEX:
-<<<<<<< HEAD
-	case PHY_INTERFACE_MODE_SGMII:
-=======
->>>>>>> upstream/master
 	case PHY_INTERFACE_MODE_10GBASER:
 		v = rtl930x_read_sds_phy(sds_num, 5, 1);
 		return v & 0xff;
@@ -3094,11 +2844,7 @@ u32 rtl9300_sds_sym_err_get(int sds_num, phy_interface_t phy_mode)
 	return v;
 }
 
-<<<<<<< HEAD
-static int rtl9300_sds_check_calibration(int sds_num, phy_interface_t phy_mode)
-=======
 int rtl9300_sds_check_calibration(int sds_num, phy_interface_t phy_mode)
->>>>>>> upstream/master
 {
 	u32 errors1, errors2;
 
@@ -3112,10 +2858,6 @@ int rtl9300_sds_check_calibration(int sds_num, phy_interface_t phy_mode)
 
 	switch (phy_mode) {
 	case PHY_INTERFACE_MODE_1000BASEX:
-<<<<<<< HEAD
-	case PHY_INTERFACE_MODE_SGMII:
-=======
->>>>>>> upstream/master
 	case PHY_INTERFACE_MODE_XGMII:
 		if ((errors2 - errors1 > 100) ||
 		    (errors1 >= 0xffff00) || (errors2 >= 0xffff00)) {
@@ -3136,11 +2878,7 @@ int rtl9300_sds_check_calibration(int sds_num, phy_interface_t phy_mode)
 	return 0;
 }
 
-<<<<<<< HEAD
-static void rtl9300_phy_enable_10g_1g(int sds_num)
-=======
 void rtl9300_phy_enable_10g_1g(int sds_num)
->>>>>>> upstream/master
 {
 	u32 v;
 
@@ -3382,11 +3120,7 @@ int rtl9300_sds_cmu_band_get(int sds)
 	return cmu_band;
 }
 
-<<<<<<< HEAD
-static void rtl9310_sds_field_w(int sds, u32 page, u32 reg, int end_bit, int start_bit, u32 v)
-=======
 void rtl9310_sds_field_w(int sds, u32 page, u32 reg, int end_bit, int start_bit, u32 v)
->>>>>>> upstream/master
 {
 	int l = end_bit - start_bit + 1;
 	u32 data = v;
@@ -3402,11 +3136,7 @@ void rtl9310_sds_field_w(int sds, u32 page, u32 reg, int end_bit, int start_bit,
 	rtl931x_write_sds_phy(sds, page, reg, data);
 }
 
-<<<<<<< HEAD
-static u32 rtl9310_sds_field_r(int sds, u32 page, u32 reg, int end_bit, int start_bit)
-=======
 u32 rtl9310_sds_field_r(int sds, u32 page, u32 reg, int end_bit, int start_bit)
->>>>>>> upstream/master
 {
 	int l = end_bit - start_bit + 1;
 	u32 v = rtl931x_read_sds_phy(sds, page, reg);
@@ -3438,21 +3168,12 @@ static void rtl931x_sds_rst(u32 sds)
 
 static void rtl931x_symerr_clear(u32 sds, phy_interface_t mode)
 {
-<<<<<<< HEAD
-	
-	u32 xsg_sdsid_0, xsg_sdsid_1;
-	
-=======
 
->>>>>>> upstream/master
 	switch (mode) {
 	case PHY_INTERFACE_MODE_NA:
 		break;
 	case PHY_INTERFACE_MODE_XGMII:
-<<<<<<< HEAD
-=======
 		u32 xsg_sdsid_0, xsg_sdsid_1;
->>>>>>> upstream/master
 
 		if (sds < 2)
 			xsg_sdsid_0 = sds;
@@ -3804,12 +3525,6 @@ void rtl931x_sds_init(u32 sds, phy_interface_t mode)
 	ori = sw_r32(RTL931X_PS_SERDES_OFF_MODE_CTRL_ADDR);
 	val = ori | (1 << sds);
 	sw_w32(val, RTL931X_PS_SERDES_OFF_MODE_CTRL_ADDR);
-<<<<<<< HEAD
-	
-	u32 op_code = 0x6003;
-	u32 evenSds;
-=======
->>>>>>> upstream/master
 
 	switch (mode) {
 	case PHY_INTERFACE_MODE_NA:
@@ -3834,11 +3549,8 @@ void rtl931x_sds_init(u32 sds, phy_interface_t mode)
 		break;
 
 	case PHY_INTERFACE_MODE_USXGMII: /* MII_USXGMII_10GSXGMII/10GDXGMII/10GQXGMII: */
-<<<<<<< HEAD
-=======
 		u32 op_code = 0x6003;
 		u32 evenSds;
->>>>>>> upstream/master
 
 		if (chiptype) {
 			rtl9310_sds_field_w(asds, 0x6, 0x2, 12, 12, 1);
@@ -4068,13 +3780,10 @@ static int rtl8214fc_phy_probe(struct phy_device *phydev)
 	int addr = phydev->mdio.addr;
 	int ret = 0;
 
-<<<<<<< HEAD
-=======
 	/* 839x has internal SerDes */
 	if (soc_info.id == 0x8393)
 		return -ENODEV;
 
->>>>>>> upstream/master
 	/* All base addresses of the PHYs start at multiples of 8 */
 	devm_phy_package_join(dev, phydev, addr & (~7),
 				sizeof(struct rtl83xx_shared_private));
@@ -4083,12 +3792,7 @@ static int rtl8214fc_phy_probe(struct phy_device *phydev)
 		struct rtl83xx_shared_private *shared = phydev->shared->priv;
 		shared->name = "RTL8214FC";
 		/* Configuration must be done while patching still possible */
-<<<<<<< HEAD
-		if (soc_info.family == RTL8380_FAMILY_ID)
-			ret = rtl8380_configure_rtl8214fc(phydev);
-=======
 		ret = rtl8380_configure_rtl8214fc(phydev);
->>>>>>> upstream/master
 		if (ret)
 			return ret;
 	}
@@ -4248,10 +3952,7 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.write_page	= rtl821x_write_page,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-<<<<<<< HEAD
-=======
 		.set_loopback	= genphy_loopback,
->>>>>>> upstream/master
 	},
 	{
 		.match_phy_device = rtl8214fc_match_phy_device,
@@ -4259,21 +3960,13 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.config_aneg	= rtl8214fc_config_aneg,
 		.get_eee	= rtl8214fc_get_eee,
 		.get_features	= rtl8214fc_get_features,
-<<<<<<< HEAD
-		.get_tunable    = rtl8214fc_get_tunable,
-=======
 		.get_port	= rtl8214fc_get_port,
->>>>>>> upstream/master
 		.probe		= rtl8214fc_phy_probe,
 		.read_page	= rtl821x_read_page,
 		.read_status    = rtl8214fc_read_status,
 		.resume		= rtl8214fc_resume,
 		.set_eee	= rtl8214fc_set_eee,
-<<<<<<< HEAD
-		.set_tunable	= rtl8214fc_set_tunable,
-=======
 		.set_port	= rtl8214fc_set_port,
->>>>>>> upstream/master
 		.suspend	= rtl8214fc_suspend,
 		.write_page	= rtl821x_write_page,
 	},
@@ -4286,10 +3979,7 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.write_page	= rtl821x_write_page,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-<<<<<<< HEAD
-=======
 		.set_loopback	= genphy_loopback,
->>>>>>> upstream/master
 		.set_eee	= rtl8218b_set_eee,
 		.get_eee	= rtl8218b_get_eee,
 	},
@@ -4302,10 +3992,7 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.write_page	= rtl821x_write_page,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-<<<<<<< HEAD
-=======
 		.set_loopback	= genphy_loopback,
->>>>>>> upstream/master
 		.set_eee	= rtl8218d_set_eee,
 		.get_eee	= rtl8218d_get_eee,
 	},
@@ -4315,10 +4002,7 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.features       = PHY_GBIT_FEATURES,
 		.suspend        = genphy_suspend,
 		.resume         = genphy_resume,
-<<<<<<< HEAD
-=======
 		.set_loopback   = genphy_loopback,
->>>>>>> upstream/master
 		.read_page      = rtl821x_read_page,
 		.write_page     = rtl821x_write_page,
 		.read_status    = rtl8226_read_status,
@@ -4332,10 +4016,7 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.features	= PHY_GBIT_FEATURES,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-<<<<<<< HEAD
-=======
 		.set_loopback	= genphy_loopback,
->>>>>>> upstream/master
 		.read_page	= rtl821x_read_page,
 		.write_page	= rtl821x_write_page,
 		.read_status	= rtl8226_read_status,
@@ -4352,10 +4033,7 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.write_page	= rtl821x_write_page,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-<<<<<<< HEAD
-=======
 		.set_loopback	= genphy_loopback,
->>>>>>> upstream/master
 		.set_eee	= rtl8218b_set_eee,
 		.get_eee	= rtl8218b_get_eee,
 	},
@@ -4368,10 +4046,7 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.write_page	= rtl821x_write_page,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-<<<<<<< HEAD
-=======
 		.set_loopback	= genphy_loopback,
->>>>>>> upstream/master
 		.read_status	= rtl8380_read_status,
 	},
 	{
@@ -4383,10 +4058,7 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.write_page	= rtl821x_write_page,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-<<<<<<< HEAD
-=======
 		.set_loopback	= genphy_loopback,
->>>>>>> upstream/master
 		.read_status	= rtl8393_read_status,
 	},
 	{
@@ -4398,10 +4070,7 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.probe		= rtl8390_serdes_probe,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-<<<<<<< HEAD
-=======
 		.set_loopback	= genphy_loopback,
->>>>>>> upstream/master
 	},
 	{
 		PHY_ID_MATCH_MODEL(PHY_ID_RTL9300_I),
@@ -4412,10 +4081,7 @@ static struct phy_driver rtl83xx_phy_driver[] = {
 		.probe		= rtl9300_serdes_probe,
 		.suspend	= genphy_suspend,
 		.resume		= genphy_resume,
-<<<<<<< HEAD
-=======
 		.set_loopback	= genphy_loopback,
->>>>>>> upstream/master
 		.read_status	= rtl9300_read_status,
 	},
 };
