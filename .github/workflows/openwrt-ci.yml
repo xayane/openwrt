@@ -106,9 +106,6 @@ jobs:
           df -hT
           echo "=============================================================================="
 
-      - name: Enable long path names
-        run: git config --global core.longpaths true
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
