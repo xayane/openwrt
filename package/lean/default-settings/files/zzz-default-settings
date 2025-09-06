@@ -3,7 +3,6 @@
 uci -q batch <<-EOF
 	set system.@system[0].timezone='CST-8'
 	set system.@system[0].zonename='Asia/Shanghai'
-	uci set system.@system[0].hostname=ironman
 
 	delete system.ntp.server
 	add_list system.ntp.server='ntp1.aliyun.com'
@@ -11,24 +10,7 @@ uci -q batch <<-EOF
 	add_list system.ntp.server='ntp.ntsc.ac.cn'
 	add_list system.ntp.server='time.apple.com'
 EOF
-
 uci commit system
-
-uci set fstab.@global[0].anon_mount=1
-uci commit fstab
-
-uci set network.wan.proto='pppoe'
-uci set network.wan.ifname='bond-wan'
-uci set network.wan6.ifname='bond-wan'
-uci set network.lan.ipaddr='10.0.0.1'
-uci set network.lan.proto='static'
-uci set network.lan.type='bridge'
-uci set network.lan.ifname='bond-lan'
-uci commit network
-
-uci set luci.themes.Argon=/luci-static/argon
-uci set luci.main.mediaurlbase=/luci-static/argon
-uci commit luci
 
 rm -f /usr/lib/lua/luci/view/admin_status/index/mwan.htm
 rm -f /usr/lib/lua/luci/view/admin_status/index/upnp.htm
@@ -65,13 +47,13 @@ sed -i '/check_signature/d' /etc/opkg.conf
 
 sed -i '/REDIRECT --to-ports 53/d' /etc/firewall.user
 
-sed -i '/option disabled/d' /etc/config/wireless
-sed -i '/set wireless.radio${devidx}.disabled/d' /lib/wifi/mac80211.sh
-
 sed -i '/DISTRIB_REVISION/d' /etc/openwrt_release
-echo "DISTRIB_REVISION='R25.5.25'" >> /etc/openwrt_release
+echo "DISTRIB_REVISION='R25.8.8'" >> /etc/openwrt_release
 sed -i '/DISTRIB_DESCRIPTION/d' /etc/openwrt_release
 echo "DISTRIB_DESCRIPTION='LEDE '" >> /etc/openwrt_release
+
+sed -i '/OPENWRT_RELEASE/d' /usr/lib/os-release
+echo 'OPENWRT_RELEASE="LEDE R25.8.8"' >> /usr/lib/os-release
 
 sed -i '/log-facility/d' /etc/dnsmasq.conf
 echo "log-facility=/dev/null" >> /etc/dnsmasq.conf
