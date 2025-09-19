@@ -156,6 +156,11 @@ jobs:
           git clone https://github.com/SAENE/luci-theme-design.git package/feeds/luci/luci-theme-design
           git clone -b master https://github.com/jerrykuku/luci-theme-argon.git package/feeds/luci/luci-theme-argon
           git clone -b master https://github.com/jerrykuku/luci-app-argon-config.git package/feeds/luci/luci-app-argon-config
+          git clone https://github.com/derisamedia/luci-theme-alpha package/feeds/luci/luci-theme-alpha
+          git clone https://github.com/derisamedia/luci-app-alpha-config package/feeds/luci/luci-app-alpha-config
+          git clone -b js https://github.com/sirpdboy/luci-theme-kucat package/feeds/luci/luci-theme-kucat
+          git clone https://github.com/sirpdboy/luci-app-kucat-config package/feeds/luci/luci-app-kucat-config
+          git clone https://github.com/EasyTier/luci-app-easytier package/feeds/luci/luci-app-easytier
           git clone https://github.com/zzsj0928/luci-app-pushbot package/feeds/luci/luci-app-pushbot
           git clone https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic package/feeds/luci/luci-app-unblockneteasemusic
           
@@ -306,6 +311,7 @@ jobs:
           CONFIG_PACKAGE_luci-app-vlmcsd=y
           CONFIG_PACKAGE_luci-app-wol=y
           CONFIG_PACKAGE_luci-app-pushbot=y
+          CONFIG_PACKAGE_luci-app-easytier=y
           CONFIG_PACKAGE_luci-app-zerotier=y
           EOF
 
@@ -313,11 +319,10 @@ jobs:
           cat >> .config <<EOF
           CONFIG_PACKAGE_luci-theme-argon=y
           CONFIG_PACKAGE_luci-app-argon-config=y
-          CONFIG_PACKAGE_luci-theme-netgear=y
-          CONFIG_PACKAGE_luci-theme-bootstrap=y
-          CONFIG_PACKAGE_luci-theme-material=y
-          CONFIG_PACKAGE_luci-theme-opentomato=y
-          # CONFIG_PACKAGE_luci-theme-infinityfreedom-ng is not set
+          CONFIG_PACKAGE_luci-theme-kucat=y
+          CONFIG_PACKAGE_luci-app-kucat-config=y
+          CONFIG_PACKAGE_luci-theme-alpha=y
+          CONFIG_PACKAGE_luci-app-alpha-config=y 
           EOF
 
           # 常用软件包:
