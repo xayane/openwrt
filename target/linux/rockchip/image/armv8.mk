@@ -27,7 +27,7 @@ define Device/ariaboard_photonicat2
   DEVICE_MODEL := Photonicat 2
   SOC := rk3576
   DEVICE_DTS := rockchip/rk3576-photonicat2
-  UBOOT_DEVICE_NAME := evb-rk3576
+  UBOOT_DEVICE_NAME := generic-rk3576
   IMAGE/sysupgrade.img.gz := boot-common | boot-script rk3576 | pine64-img | gzip | append-metadata
   DEVICE_PACKAGES := kmod-aic8800u wpad-openssl
 endef
@@ -59,7 +59,7 @@ define Device/armsom_sige5
   DEVICE_MODEL := Sige5
   SOC := rk3576
   DEVICE_DTS := rockchip/rk3576-armsom-sige5
-  UBOOT_DEVICE_NAME := evb-rk3576
+  UBOOT_DEVICE_NAME := sige5-rk3576
   IMAGE/sysupgrade.img.gz := boot-common | boot-script rk3576 | pine64-img | gzip | append-metadata
 endef
 TARGET_DEVICES += armsom_sige5
@@ -161,7 +161,7 @@ define Device/friendlyarm_nanopi-m5
   DEVICE_MODEL := NanoPi M5
   SOC := rk3576
   DEVICE_DTS := rockchip/rk3576-nanopi-m5
-  UBOOT_DEVICE_NAME := evb-rk3576
+  UBOOT_DEVICE_NAME := generic-rk3576
   DEVICE_PACKAGES := kmod-gpio-button-hotplug
   IMAGE/sysupgrade.img.gz := boot-common | boot-script rk3576 | pine64-img | gzip | append-metadata
 endef
@@ -291,7 +291,7 @@ define Device/friendlyarm_nanopi-r76s
   DEVICE_MODEL := NanoPi R76S
   SOC := rk3576
   DEVICE_DTS := rockchip/rk3576-nanopi-r76s
-  UBOOT_DEVICE_NAME := evb-rk3576
+  UBOOT_DEVICE_NAME := generic-rk3576
   DEVICE_PACKAGES := kmod-gpio-button-hotplug kmod-r8125
   IMAGE/sysupgrade.img.gz := boot-common | boot-script rk3576 | pine64-img | gzip | append-metadata
 endef
@@ -523,6 +523,32 @@ define Device/radxa_rock-5b
   DEVICE_PACKAGES := kmod-r8125-rss kmod-hwmon-pwmfan
 endef
 TARGET_DEVICES += radxa_rock-5b
+
+define Device/radxa_rock-5c
+  DEVICE_VENDOR := Radxa
+  DEVICE_MODEL := ROCK 5C/5C Lite
+  SOC := rk3588s
+  UBOOT_DEVICE_NAME := rock-5c-rk3588s
+  DEVICE_PACKAGES := kmod-aic8800u wpad-openssl
+endef
+TARGET_DEVICES += radxa_rock-5c
+
+define Device/radxa_zero-3e
+  DEVICE_VENDOR := Radxa
+  DEVICE_MODEL := ZERO 3E
+  DEVICE_DTS := rockchip/rk3566-radxa-zero-3e
+  UBOOT_DEVICE_NAME := radxa-zero-3-rk3566
+endef
+TARGET_DEVICES += radxa_zero-3e
+
+define Device/radxa_zero-3w
+  DEVICE_VENDOR := Radxa
+  DEVICE_MODEL := ZERO 3W
+  DEVICE_DTS := rockchip/rk3566-radxa-zero-3w
+  DEVICE_PACKAGES := kmod-aic8800s wpad-openssl
+  UBOOT_DEVICE_NAME := radxa-zero-3-rk3566
+endef
+TARGET_DEVICES += radxa_zero-3w
 
 define Device/rocktech_mpc1903
   DEVICE_VENDOR := Rocktech
