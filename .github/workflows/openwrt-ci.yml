@@ -158,7 +158,7 @@ jobs:
           git clone -b master https://github.com/jerrykuku/luci-app-argon-config.git package/feeds/luci/luci-app-argon-config
           git clone https://github.com/derisamedia/luci-theme-alpha package/feeds/luci/luci-theme-alpha
           git clone https://github.com/derisamedia/luci-app-alpha-config package/feeds/luci/luci-app-alpha-config
-          git clone -b js https://github.com/sirpdboy/luci-theme-kucat package/feeds/luci/luci-theme-kucat
+          git clone -b master https://github.com/sirpdboy/luci-theme-kucat package/feeds/luci/luci-theme-kucat
           git clone https://github.com/sirpdboy/luci-app-kucat-config package/feeds/luci/luci-app-kucat-config
           git clone https://github.com/EasyTier/luci-app-easytier package/feeds/luci/luci-app-easytier
           git clone https://github.com/zzsj0928/luci-app-pushbot package/feeds/luci/luci-app-pushbot
