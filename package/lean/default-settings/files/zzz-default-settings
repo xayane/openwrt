@@ -13,13 +13,24 @@ uci -q batch <<-EOF
 EOF
 uci commit system
 
-uci set network.wan.proto='pppoe'
-uci set network.wan.ifname='wan'
-uci set network.wan6.ifname='wan'
-uci set network.lan.ipaddr='10.0.0.1'
+uci set network.@device[0]=device
+uci set network.@device[0].name='br-lan'
+uci set network.@device[0].type='bridge'
+uci set network.@device[0].ports='eth1' 'eth2' 'eth3'
+uci set network.lan=interface
 uci set network.lan.proto='static'
-uci set network.lan.type='bridge'
-uci set network.lan.ifname='lan'
+uci set network.lan.ipaddr='10.0.0.1'
+uci set network.lan.netmask='255.255.255.0'
+uci set network.lan.device='br-lan'
+uci set network.TOMODEM=interface
+uci set network.TOMODEM.proto='static'
+uci set network.TOMODEM.ipaddr='192.168.1.254'
+uci set network.TOMODEM.netmask='255.255.255.0'
+uci set network.TOMODEM.device='eth0'
+uci set network.wan=interface
+uci set network.wan.proto='pppoe'
+uci set network.wan.device='eth0'
+
 uci commit network
 
 uci set luci.themes.Argon=/luci-static/argon
