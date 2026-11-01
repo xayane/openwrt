@@ -6,9 +6,12 @@ PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL=$(PROJECT_GIT)/project/firmware/qca-wireless.git
-PKG_SOURCE_DATE:=2026-08-23
-PKG_SOURCE_VERSION:=0c67bbcca45f7fc00255dbb078754cac89d3f40e
-PKG_MIRROR_HASH:=f6831524c626a8d0f2af09b62e93f7eb3d9165f0fd22b15255cfa6a0d7cfd5e2
+PKG_SOURCE_DATE:=2026-10-25
+PKG_SOURCE_VERSION:=49ce14c099b16044b7062df54bdabeb495b804ad
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(subst -,.,$(PKG_SOURCE_DATE))~$(call version_abbrev,$(PKG_SOURCE_VERSION))
+PKG_SOURCE:=$(PKG_SOURCE_SUBDIR).tar.zst
+PKG_MIRROR_HASH:=b9c6723021af9267035b7e25762b80c06887a5ea9c524b2649b0b27ea58b121c
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_FLAGS:=nonshared
 
 include $(INCLUDE_DIR)/package.mk
@@ -27,6 +30,8 @@ endef
 # <https://wireless.wiki.kernel.org/en/users/drivers/ath10k/boardfiles>
 
 ALLWIFIBOARDS:= \
+	ubnt_utr \
+	tplink_deco-m5 \
 	8devices_kiwi \
 	8devices_mango \
 	alfa-network_ap120c-ax \
@@ -337,5 +342,8 @@ $(eval $(call generate-ipq-wifi-package,zyxel_nbg7815,Zyxel NBG7815))
 $(eval $(call generate-ipq-wifi-package,zyxel_nwa110ax,Zyxel NWA110AX))
 $(eval $(call generate-ipq-wifi-package,zyxel_nwa210ax,Zyxel NWA210AX))
 $(eval $(call generate-ipq-wifi-package,zyxel_scr50axe,Zyxel SCR50AXE))
+
+$(eval $(call generate-ipq-wifi-package,tplink_deco-m5,TP-Link Deco M5))
+$(eval $(call generate-ipq-wifi-package,ubnt_utr,Ubiquiti UniFi Travel Router))
 
 $(foreach PACKAGE,$(ALLWIFIPACKAGES),$(eval $(call BuildPackage,$(PACKAGE))))

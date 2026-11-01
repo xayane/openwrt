@@ -79,7 +79,7 @@ This reverts commit bffcc6882a1bb2be8c9420184966f4c2c822078e.
  	genl_info_net_set(&info, net);
 --- a/net/openvswitch/conntrack.c
 +++ b/net/openvswitch/conntrack.c
-@@ -1628,7 +1628,7 @@
+@@ -1672,7 +1672,7 @@
  ovs_ct_limit_cmd_reply_start(struct genl_info *info, u8 cmd,
  			     struct ovs_header **ovs_reply_header)
  {
@@ -135,7 +135,7 @@ This reverts commit bffcc6882a1bb2be8c9420184966f4c2c822078e.
  	struct net *net = sock_net(skb->sk);
  	struct sw_flow_key key;
  	struct sk_buff *reply;
-@@ -1669,7 +1669,7 @@
+@@ -1677,7 +1677,7 @@
  {
  	struct datapath *dp;
  
@@ -144,7 +144,7 @@ This reverts commit bffcc6882a1bb2be8c9420184966f4c2c822078e.
  			     info->attrs);
  	if (IS_ERR(dp))
  		return;
-@@ -1962,8 +1962,7 @@
+@@ -1970,8 +1970,7 @@
  		return -ENOMEM;
  
  	ovs_lock();
@@ -154,7 +154,7 @@ This reverts commit bffcc6882a1bb2be8c9420184966f4c2c822078e.
  	err = PTR_ERR(dp);
  	if (IS_ERR(dp))
  		goto err_unlock_free;
-@@ -1996,8 +1995,7 @@
+@@ -2004,8 +2003,7 @@
  		return -ENOMEM;
  
  	ovs_lock();
@@ -164,7 +164,7 @@ This reverts commit bffcc6882a1bb2be8c9420184966f4c2c822078e.
  	err = PTR_ERR(dp);
  	if (IS_ERR(dp))
  		goto err_unlock_free;
-@@ -2032,8 +2030,7 @@
+@@ -2040,8 +2038,7 @@
  		return -ENOMEM;
  
  	ovs_lock();
@@ -174,7 +174,7 @@ This reverts commit bffcc6882a1bb2be8c9420184966f4c2c822078e.
  	if (IS_ERR(dp)) {
  		err = PTR_ERR(dp);
  		goto err_unlock_free;
-@@ -2313,7 +2310,7 @@
+@@ -2321,7 +2318,7 @@
  static int ovs_vport_cmd_new(struct sk_buff *skb, struct genl_info *info)
  {
  	struct nlattr **a = info->attrs;
@@ -183,7 +183,7 @@ This reverts commit bffcc6882a1bb2be8c9420184966f4c2c822078e.
  	struct vport_parms parms;
  	struct sk_buff *reply;
  	struct vport *vport;
-@@ -2415,7 +2412,7 @@
+@@ -2423,7 +2420,7 @@
  		return -ENOMEM;
  
  	ovs_lock();
@@ -192,7 +192,7 @@ This reverts commit bffcc6882a1bb2be8c9420184966f4c2c822078e.
  	err = PTR_ERR(vport);
  	if (IS_ERR(vport))
  		goto exit_unlock_free;
-@@ -2471,7 +2468,7 @@
+@@ -2479,7 +2476,7 @@
  		return -ENOMEM;
  
  	ovs_lock();
@@ -201,7 +201,7 @@ This reverts commit bffcc6882a1bb2be8c9420184966f4c2c822078e.
  	err = PTR_ERR(vport);
  	if (IS_ERR(vport))
  		goto exit_unlock_free;
-@@ -2514,7 +2511,7 @@
+@@ -2522,7 +2519,7 @@
  static int ovs_vport_cmd_get(struct sk_buff *skb, struct genl_info *info)
  {
  	struct nlattr **a = info->attrs;

@@ -12,7 +12,7 @@ Signed-off-by: Christian Marangi <ansuelsmth@gmail.com>
 ---
 --- a/include/linux/netdevice.h
 +++ b/include/linux/netdevice.h
-@@ -2257,7 +2257,7 @@
+@@ -2268,7 +2268,7 @@
  #if IS_ENABLED(CONFIG_AX25)
  	struct ax25_dev	__rcu	*ax25_ptr;
  #endif

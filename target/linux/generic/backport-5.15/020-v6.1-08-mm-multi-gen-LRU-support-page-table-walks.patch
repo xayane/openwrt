@@ -169,7 +169,7 @@ Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
  
 --- a/include/linux/mm_types.h
 +++ b/include/linux/mm_types.h
-@@ -583,6 +583,22 @@
+@@ -587,6 +587,22 @@
  #ifdef CONFIG_IOMMU_SUPPORT
  		u32 pasid;
  #endif
@@ -192,7 +192,7 @@ Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
  	} __randomize_layout;
  
  	/*
-@@ -609,6 +625,66 @@
+@@ -613,6 +629,66 @@
  	return (struct cpumask *)&mm->cpu_bitmap;
  }
  
@@ -370,7 +370,7 @@ Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
  }
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
-@@ -1098,6 +1098,7 @@
+@@ -1101,6 +1101,7 @@
  		goto fail_nocontext;
  
  	mm->user_ns = get_user_ns(user_ns);
@@ -378,7 +378,7 @@ Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
  	return mm;
  
  fail_nocontext:
-@@ -1140,6 +1141,7 @@
+@@ -1143,6 +1144,7 @@
  	}
  	if (mm->binfmt)
  		module_put(mm->binfmt->module);
@@ -386,7 +386,7 @@ Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
  	mmdrop(mm);
  }
  
-@@ -2703,6 +2705,13 @@
+@@ -2720,6 +2722,13 @@
  		get_task_struct(p);
  	}
  

@@ -41,7 +41,7 @@
  
  /*
   * MTD methods which simply translate the effective address and pass through
-@@ -235,6 +237,146 @@
+@@ -241,6 +243,146 @@
  	return ret;
  }
  
@@ -188,7 +188,7 @@
  int mtd_add_partition(struct mtd_info *parent, const char *name,
  		      long long offset, long long length)
  {
-@@ -274,6 +416,7 @@
+@@ -280,6 +422,7 @@
  	if (ret)
  		goto err_remove_part;
  
@@ -196,7 +196,7 @@
  	mtd_add_partition_attrs(child);
  
  	return 0;
-@@ -422,6 +565,7 @@
+@@ -424,6 +567,7 @@
  			goto err_del_partitions;
  		}
  
@@ -204,7 +204,7 @@
  		mtd_add_partition_attrs(child);
  
  		/* Look for subpartitions */
-@@ -438,31 +582,6 @@
+@@ -440,31 +584,6 @@
  	return ret;
  }
  

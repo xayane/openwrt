@@ -59,7 +59,7 @@ Subject: [PATCH] mtd: mtdsplit support
  
  /*
   * MTD methods which simply translate the effective address and pass through
-@@ -236,6 +238,147 @@
+@@ -242,6 +244,147 @@
  	return ret;
  }
  
@@ -207,7 +207,7 @@ Subject: [PATCH] mtd: mtdsplit support
  int mtd_add_partition(struct mtd_info *parent, const char *name,
  		      long long offset, long long length)
  {
-@@ -275,6 +418,7 @@
+@@ -281,6 +424,7 @@
  	if (ret)
  		goto err_remove_part;
  
@@ -215,7 +215,7 @@ Subject: [PATCH] mtd: mtdsplit support
  	mtd_add_partition_attrs(child);
  
  	return 0;
-@@ -423,6 +567,7 @@
+@@ -425,6 +569,7 @@
  			goto err_del_partitions;
  		}
  
@@ -223,7 +223,7 @@ Subject: [PATCH] mtd: mtdsplit support
  		mtd_add_partition_attrs(child);
  
  		/* Look for subpartitions */
-@@ -439,31 +584,6 @@
+@@ -441,31 +586,6 @@
  	return ret;
  }
  
