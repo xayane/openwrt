@@ -42,10 +42,6 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 300
 
-    # 主要防线是触发器白名单（push master / release / workflow_dispatch，
-    # 无 pull_request）：fork 的推送不会进入本仓库。
-    # 原 owner.id == sender.id 在 fork 场景同样成立、并不构成有效防护，
-    # 这里只保留一条语义明确的兜底，供将来新增触发器时使用。
     if: github.event_name != 'pull_request'
 
 
@@ -110,23 +106,32 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-owrt-${{ steps.runner_image.outputs.tag }}-
 
-      # 职责划分：本步骤只做 apt 包裁剪与依赖安装；
-      # 目录与镜像级清理由前面的 Free Disk Space 步骤统一负责。
+      # 职责划分：本步骤只负责安装编译依赖；
+      # 系统级目录/包清理由前面的 Free Disk Space 步骤统一负责（它带兜底）。
+      # 26.04 上重复的 apt purge 会因 glob 无匹配返回 100，直接打挂 job。
       - name: Initialization environment
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
           sudo -E apt update
-          sudo -E apt -y purge azure-cli* ghc* zulu* firefox* google* dotnet* powershell* openjdk* mysql* php* mongodb* snap*
-          sudo -E apt -y install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler flex gawk gcc-multilib g++-multilib gettext genisoimage git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool llvm lrzsz msmtp ninja-build 7zip patch pkgconf python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
+          BUILD_DEPS="ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler flex gawk gcc-multilib g++-multilib gettext genisoimage git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool llvm lrzsz msmtp ninja-build 7zip patch pkgconf python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev"
+          # 新镜像与旧镜像的包集合差异较大：先报出不可用的依赖，
+          # 避免一条长 apt install 失败后才逐个排查。
+          MISSING_DEPS=""
+          for p in ${BUILD_DEPS}; do
+            apt-cache show "$p" > /dev/null 2>&1 || MISSING_DEPS="${MISSING_DEPS} ${p}"
+          done
+          if [ -n "${MISSING_DEPS}" ]; then
+            echo "::warning::当前镜像缺少以下依赖:${MISSING_DEPS}"
+          fi
+          sudo -E apt -y install ${BUILD_DEPS}
           sudo -E apt -y autoremove --purge
           sudo -E apt clean
           df -hT
 
       - name: Report disk budget
         # 环境准备完成后的可用空间写进 run summary，低于建议值时告警。
-        # "删掉 hugoalh 后空间够不够"由每次构建自己给出数据，不靠推算。
+        # 由每次构建自己给出数据，不靠推算。
         run: |
           AVAIL_GB=$(df -BG --output=avail / | tail -n 1 | tr -dc '0-9')
           echo "Available before build: ${AVAIL_GB} GiB"
