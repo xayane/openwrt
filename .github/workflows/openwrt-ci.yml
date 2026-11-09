@@ -11,44 +11,43 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - 'README*'
+      - 'doc/**'
   release:
     types: [published]
-  # schedule:
-  #   - cron: 0 20 * * *
-  # release:
-  #   types: [published]
-  #push:
-  #  tags:
-  #    - '*'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # release 构建不自动取消，避免已完成的固件被中途打断。
+  cancel-in-progress: ${{ github.event_name != 'release' }}
 
 env:
-  REPO_URL: https://github.com/coolsnowwolf/lede
-  REPO_BRANCH: master
-  FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: .config
-  DIY_P1_SH: diy-part1.sh
-  DIY_P2_SH: diy-part2.sh
-  UPLOAD_BIN_DIR: true
-  UPLOAD_FIRMWARE: true
-  UPLOAD_COWTRANSFER: false
-  UPLOAD_WETRANSFER: false
-  UPLOAD_RELEASE: false
+  # TZ 由 libc 自动读取，决定日志时间戳时区，需保留；
+  # 其余 13 项为模板残留，从未被任何步骤引用。
   TZ: Asia/Shanghai
+  # 限制 ccache 体积，避免缓存膨胀占用磁盘与 cache 配额。
+  CCACHE_MAXSIZE: 2G
 
 permissions:
   contents: read
 
 jobs:
   build_openwrt:
-
-    permissions:
-      contents: write # for release creation
-    
+    # 权限继承顶层的 contents: read；
+    # 只有 publish_release job 需要 contents: write。
     name: Build OpenWrt firmware
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
+    timeout-minutes: 300
 
-    if: github.event.repository.owner.id == github.event.sender.id || ! github.event.sender.id
+    # 主要防线是触发器白名单（push master / release / workflow_dispatch，
+    # 无 pull_request）：fork 的推送不会进入本仓库。
+    # 原 owner.id == sender.id 在 fork 场景同样成立、并不构成有效防护，
+    # 这里只保留一条语义明确的兜底，供将来新增触发器时使用。
+    if: github.event_name != 'pull_request'
+
 
     steps:
     
@@ -62,86 +61,80 @@ jobs:
           echo -e "CPU核心信息：$(cat /proc/cpuinfo | grep name | cut -f2 -d: | uniq -c) \n"
           echo "--------------------------内存信息--------------------------"
           echo "已安装内存详细信息："
-          echo -e "$(sudo lshw -short -C memory | grep GiB) \n"
+          free -h
           echo "--------------------------硬盘信息--------------------------"
-          echo "硬盘数量：$(ls /dev/sd* | grep -v [1-9] | wc -l)" && df -hT
-          
-      - name: "Optimize Disk Space"
-        uses: "hugoalh/disk-space-optimizer-ghaction@v0.8.1"
-        with:
-          operate_sudo: "True"
-          general_include: ".+"
-          general_exclude: |-
-            ^GCC$
-            ^G\+\+$
-            Clang
-            LLVM
-          docker_include: ".+"
-          docker_prune: "True"
-          docker_clean: "True"
-          apt_prune: "True"
-          apt_clean: "True"
-          homebrew_prune: "True"
-          homebrew_clean: "True"
-          npm_prune: "True"
-          npm_clean: "True"
-          os_swap: "True"
-  
-      # - name: Freeing up disk space
-      #   uses: easimon/maximize-build-space@master
-      #   with: 
-      #     root-reserve-mb: 2048
-      #     temp-reserve-mb: 2048
-      #     swap-size-mb: 1
-      #     remove-dotnet: 'true'
-      #     remove-android: 'true'
-      #     remove-haskell: 'true'
-      #     remove-codeql: 'true'
-      #     remove-docker-images: 'true'
-  
-      - name: Free up disk space complete
-        run: |
-          echo "Free up disk space complete"
-          echo "=============================================================================="
           df -hT
-          echo "=============================================================================="
+          
+      # 磁盘清理统一由下方的 "Free Disk Space (Ubuntu)" 步骤负责，
+      # 避免多套策略互相抵消（详见该步骤注释）。
 
       - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          ref: master
+        # 不指定 ref：默认检出触发本次运行的 commit / tag，
+        # 保证 release 产物与所发布的 tag 一致。
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Free Disk Space (Ubuntu)
+        # 本步骤必须排在 Initialization environment 之前：
+        # large-packages 会 apt-get remove '^llvm-.*'，若在装完依赖后执行
+        # 会删掉刚装的 llvm/clang；放在装依赖之前则安全，且能多释放约 6 GB。
+        uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
+        with:
+          large-packages: true
+          android: true
+          dotnet: true
+          haskell: true
+          docker-images: true
+          # 保留 swap：关闭后内存不足会被内核静默 OOM kill，日志无痕迹。
+          swap-storage: false
+          # 保留 /opt/hostedtoolcache：本流程未用 setup-*，删它收益有限，
+          # 却会让后续引入 setup-node/setup-python 时重新下载或找不到固定版本。
+          preinstalled-runtimes: false
+
+      - name: Detect runner OS version
+        id: runner_image
+        # 编译环境固定为 ubuntu-26.04；把实际 OS 版本放进 cache key，
+        # 将来调整 runner 版本时缓存自动失效，无需人工同步 key。
+        run: |
+          . /etc/os-release
+          echo "tag=${VERSION_ID}" >> "${GITHUB_OUTPUT}"
+
+      - name: Restore downloads and ccache
+        # 显式拆成 restore + save：save 用 if: always()，
+        # 构建失败时也能保存 .ccache / dl，避免下次仍要全量重编。
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            dl
+            .ccache
+          key: ${{ runner.os }}-owrt-${{ steps.runner_image.outputs.tag }}-${{ hashFiles('config.seed', 'feeds.conf.default') }}
+          restore-keys: |
+            ${{ runner.os }}-owrt-${{ steps.runner_image.outputs.tag }}-
+
+      # 职责划分：本步骤只做 apt 包裁剪与依赖安装；
+      # 目录与镜像级清理由前面的 Free Disk Space 步骤统一负责。
       - name: Initialization environment
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          docker image prune -f
           sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
-          sudo -E apt-mark hold grub-efi-amd64-signed
           sudo -E apt update
-          sudo -E apt -y purge azure-cli* docker* ghc* zulu* llvm* firefox google* dotnet* powershell* openjdk* mysql* php* mongodb* dotnet* snap*
-          sudo -E apt -y full-upgrade
-          sudo -E apt -y install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler flex gawk gcc-multilib g++-multilib gettext genisoimage git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev libssl-dev libtool llvm lrzsz msmtp ninja-build p7zip p7zip-full patch pkgconf python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
-          sudo -E systemctl daemon-reload
+          sudo -E apt -y purge azure-cli* ghc* zulu* firefox* google* dotnet* powershell* openjdk* mysql* php* mongodb* snap*
+          sudo -E apt -y install ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential bzip2 ccache clang cmake cpio curl device-tree-compiler flex gawk gcc-multilib g++-multilib gettext genisoimage git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev libreadline-dev libssl-dev libtool llvm lrzsz msmtp ninja-build 7zip patch pkgconf python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
           sudo -E apt -y autoremove --purge
           sudo -E apt clean
-          sudo -E timedatectl set-timezone "Asia/Shanghai"
           df -hT
 
-      - name: Free Disk Space (Ubuntu)
-        uses: jlumbroso/free-disk-space@main
-        with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
-          preinstalled-runtimes: true
-          # all of these default to true, but feel free to set to
-          # "false" if necessary for your workflow
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: true
+      - name: Report disk budget
+        # 环境准备完成后的可用空间写进 run summary，低于建议值时告警。
+        # "删掉 hugoalh 后空间够不够"由每次构建自己给出数据，不靠推算。
+        run: |
+          AVAIL_GB=$(df -BG --output=avail / | tail -n 1 | tr -dc '0-9')
+          echo "Available before build: ${AVAIL_GB} GiB"
+          echo "### Disk budget" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Available before build: ${AVAIL_GB} GiB" >> "${GITHUB_STEP_SUMMARY}"
+          if [ "${AVAIL_GB}" -lt 12 ]; then
+            echo "::warning::可用磁盘仅 ${AVAIL_GB} GiB（建议 >= 12 GiB）。若编译报 No space left on device，请在 Initialization environment 补清理项，不要把 hugoalh 加回来。"
+          fi
 
       - name: Update feeds
         run: |
@@ -149,221 +142,87 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      # 上游仓库有意保持浮动主分支（经确认不做 commit pin）；
+      # --depth 1 已避免拉取完整历史。
       - name: Get new themes and applications
         run: |
           rm -rf package/feeds/luci/luci-theme-argon
           rm -rf package/feeds/luci/luci-app-argon-config
           rm -rf package/feeds/luci/luci-theme-infinityfreedom
           rm -rf package/feeds/luci/luci-app-unblockneteasemusic
-          git clone https://github.com/xiaoqingfengATGH/luci-theme-infinityfreedom.git package/feeds/luci/luci-theme-infinityfreedom
-          git clone -b master https://github.com/jerrykuku/luci-theme-argon.git package/feeds/luci/luci-theme-argon
-          git clone -b master https://github.com/jerrykuku/luci-app-argon-config.git package/feeds/luci/luci-app-argon-config
-          git clone https://github.com/derisamedia/luci-theme-alpha package/feeds/luci/luci-theme-alpha
-          git clone https://github.com/derisamedia/luci-app-alpha-config package/feeds/luci/luci-app-alpha-config
-          git clone -b master https://github.com/sirpdboy/luci-theme-kucat package/feeds/luci/luci-theme-kucat
-          git clone https://github.com/sirpdboy/luci-app-kucat-config package/feeds/luci/luci-app-kucat-config
-          git clone https://github.com/EasyTier/luci-app-easytier package/feeds/luci/luci-app-easytier
-          git clone https://github.com/zzsj0928/luci-app-pushbot package/feeds/luci/luci-app-pushbot
-          git clone https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic package/feeds/luci/luci-app-unblockneteasemusic
+          git clone --depth 1 https://github.com/xiaoqingfengATGH/luci-theme-infinityfreedom.git package/feeds/luci/luci-theme-infinityfreedom
+          git clone --depth 1 -b master https://github.com/jerrykuku/luci-theme-argon.git package/feeds/luci/luci-theme-argon
+          git clone --depth 1 -b master https://github.com/jerrykuku/luci-app-argon-config.git package/feeds/luci/luci-app-argon-config
+          git clone --depth 1 https://github.com/derisamedia/luci-theme-alpha package/feeds/luci/luci-theme-alpha
+          git clone --depth 1 https://github.com/derisamedia/luci-app-alpha-config package/feeds/luci/luci-app-alpha-config
+          git clone --depth 1 -b master https://github.com/sirpdboy/luci-theme-kucat package/feeds/luci/luci-theme-kucat
+          git clone --depth 1 https://github.com/sirpdboy/luci-app-kucat-config package/feeds/luci/luci-app-kucat-config
+          git clone --depth 1 https://github.com/EasyTier/luci-app-easytier package/feeds/luci/luci-app-easytier
+          git clone --depth 1 https://github.com/zzsj0928/luci-app-pushbot package/feeds/luci/luci-app-pushbot
+          git clone --depth 1 https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic package/feeds/luci/luci-app-unblockneteasemusic
           
 
-      - name: Costom configure file
+      - name: Load build config
+        # 配置作为独立文件纳入版本控制：可 diff / review，
+        # 并作为 actions/cache 的 hashFiles 输入。
         run: |
-          rm -f ./.config*
-          touch ./.config
-
-          #
-          # ========================固件定制部分========================
-          # 
-
-          # 
-          # 如果不对本区块做出任何编辑, 则生成默认配置固件. 
-          # 
-
-          # 以下为定制化固件选项和说明:
-          #
-
-          #
-          # 有些插件/选项是默认开启的, 如果想要关闭, 请参照以下示例进行编写:
-          # 
-          #          =========================================
-          #         |  # 取消编译VMware镜像:                   |
-          #         |  cat >> .config <<EOF                   |
-          #         |  # CONFIG_VMDK_IMAGES is not set        |
-          #         |  EOF                                    |
-          #          =========================================
-          #
-
-          # 
-          # 以下是一些提前准备好的一些插件选项.
-          # 直接取消注释相应代码块即可应用. 不要取消注释代码块上的汉字说明.
-          # 如果不需要代码块里的某一项配置, 只需要删除相应行.
-          #
-          # 如果需要其他插件, 请按照示例自行添加.
-          # 注意, 只需添加依赖链顶端的包. 如果你需要插件 A, 同时 A 依赖 B, 即只需要添加 A.
-          # 
-          # 无论你想要对固件进行怎样的定制, 都需要且只需要修改 EOF 回环内的内容.
-          # 
-
-          # 编译x64固件:
-          cat >> .config <<EOF
-          CONFIG_TARGET_x86=y
-          CONFIG_TARGET_x86_64=y
-          CONFIG_TARGET_x86_64_Generic=y
-          EOF
-
-          # 固件压缩:
-          cat >> .config <<EOF
-          CONFIG_TARGET_IMAGES_GZIP=y
-          EOF
-
-          # 编译UEFI固件:
-          cat >> .config <<EOF
-          CONFIG_EFI_IMAGES=y
-          EOF
-
-          # IPv6支持:
-          cat >> .config <<EOF
-          CONFIG_PACKAGE_dnsmasq_full_dhcpv6=y
-          CONFIG_PACKAGE_ipv6helper=y
-          CONFIG_PACKAGE_odhcp6c=y
-          CONFIG_PACKAGE_odhcpd-ipv6only=y
-          CONFIG_PACKAGE_luci-proto-ipv6=y
-          EOF
-
-          # 多文件系统支持:
-          cat >> .config <<EOF
-          CONFIG_PACKAGE_kmod-fs-nfs=y
-          CONFIG_PACKAGE_kmod-fs-nfs-common=y
-          CONFIG_PACKAGE_kmod-fs-nfs-v3=y
-          CONFIG_PACKAGE_kmod-fs-nfs-v4=y
-          CONFIG_PACKAGE_kmod-fs-ntfs3=y
-          CONFIG_PACKAGE_kmod-fs-squashfs=y
-          EOF
-
-          # bonding支持:
-          cat >> .config <<EOF
-          CONFIG_PACKAGE_kmod-bonding=y
-          CONFIG_PACKAGE_proto-bonding=y
-          CONFIG_PACKAGE_luci-proto-bonding=y
-          EOF
-          
-          # USB3.0支持:
-          cat >> .config <<EOF
-          CONFIG_PACKAGE_kmod-usb-ohci=y
-          CONFIG_PACKAGE_kmod-usb-ohci-pci=y
-          CONFIG_PACKAGE_kmod-usb2=y
-          CONFIG_PACKAGE_kmod-usb2-pci=y
-          CONFIG_PACKAGE_kmod-usb3=y
-          EOF
-
-          # 常用LuCI插件选择:
-          cat >> .config <<EOF
-          # CONFIG_PACKAGE_luci-app-adbyby-plus is not set
-          CONFIG_PACKAGE_luci-app-autoreboot=y
-          CONFIG_PACKAGE_luci-app-airplay2=y
-          CONFIG_PACKAGE_luci-app-openlist=y
-          # CONFIG_PACKAGE_luci-app-aria2 is not set
-          # CONFIG_PACKAGE_luci-app-docker is not set
-          # CONFIG_PACKAGE_luci-app-frpc is not set
-          # CONFIG_PACKAGE_luci-app-hd-idle is not set
-          # CONFIG_PACKAGE_luci-app-kodexplorer is not set
-          # CONFIG_PACKAGE_luci-app-music-remote-center is not set
-          CONFIG_PACKAGE_luci-app-minidlna=y
-          # CONFIG_PACKAGE_luci-app-openvpn is not set
-          # CONFIG_PACKAGE_luci-app-openvpn-server is not set
-          # CONFIG_PACKAGE_luci-app-samba is not set
-          # CONFIG_PACKAGE_luci-app-samba4 is not set
-          CONFIG_PACKAGE_luci-app-ssr-plus=y
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_libustream-mbedtls is not set
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_libustream-openssl=y
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_PACKAGE_libustream-wolfssl is not set
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_NONE_Client is not set
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Libev_Client is not set
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Rust_Client=y
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_NONE_Server is not set
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Libev_Server is not set
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Rust_Server=y
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_NONE_V2RAY is not set
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_V2ray is not set
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Xray=y
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ChinaDNS_NG=y
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_MosDNS=y
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Hysteria is not set
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Tuic_Client is not set
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadow_TLS is not set
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_IPT2Socks is not set
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Kcptun is not set
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_NaiveProxy is not set
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Redsocks2 is not set
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_Simple_Obfs=y
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks_V2ray_Plugin is not set
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Libev_Client=y
-          CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_ShadowsocksR_Libev_Server=y
-          # CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Trojan is not set
-          CONFIG_PACKAGE_luci-app-ttyd=y
-          # CONFIG_PACKAGE_luci-app-wireguard=y
-          CONFIG_PACKAGE_luci-app-ddns=y
-          CONFIG_PACKAGE_luci-app-turboacc=y
-          # CONFIG_PACKAGE_luci-app-udpxy is not set
-          # CONFIG_PACKAGE_luci-app-uhttpd is not set
-          # CONFIG_PACKAGE_luci-app-vsftpd is not set
-          # CONFIG_PACKAGE_luci-app-unblockneteasemusic is not set
-          CONFIG_PACKAGE_luci-app-upnp=y
-          CONFIG_PACKAGE_luci-app-vlmcsd=y
-          CONFIG_PACKAGE_luci-app-wol=y
-          CONFIG_PACKAGE_luci-app-pushbot=y
-          CONFIG_PACKAGE_luci-app-easytier=y
-          CONFIG_PACKAGE_luci-app-zerotier=y
-          EOF
-
-          # LuCI主题:
-          cat >> .config <<EOF
-          CONFIG_PACKAGE_luci-theme-argon=y
-          CONFIG_PACKAGE_luci-app-argon-config=y
-          CONFIG_PACKAGE_luci-theme-kucat=y
-          CONFIG_PACKAGE_luci-app-kucat-config=y
-          CONFIG_PACKAGE_luci-theme-alpha=y
-          CONFIG_PACKAGE_luci-app-alpha-config=y 
-          EOF
-
-          # 常用软件包:
-          cat >> .config <<EOF
-          CONFIG_PACKAGE_curl=y
-          CONFIG_PACKAGE_htop=y
-          CONFIG_PACKAGE_nano=y
-          CONFIG_PACKAGE_screen=y
-          CONFIG_PACKAGE_tree=y
-          # CONFIG_PACKAGE_vim-fuller is not set
-          CONFIG_PACKAGE_wget=y
-          CONFIG_PACKAGE_acme=y
-          CONFIG_PACKAGE_acme-dnsapi=y
-          CONFIG_PACKAGE_haproxy=y
-          CONFIG_PACKAGE_socat=y
-          CONFIG_SOCAT_SSL=y
-          EOF
-
-          # 取消编译VMware镜像以及镜像填充 (不要删除被缩进的注释符号):
-          # cat >> .config <<EOF
-          # # CONFIG_TARGET_IMAGES_PAD is not set
-          # # CONFIG_VMDK_IMAGES is not set
-          # EOF
-
-          # 
-          # ========================固件定制部分结束========================
-          # 
-
-          sed -i 's/^[ \t]*//g' ./.config
+          cp config.seed .config
           make defconfig
+          # Kconfig 中 "config CCACHE ... if DEVEL" 的 if 只是 prompt 可见性，
+          # 符号本身没有 depends on；但 defconfig 仍可能把该值清掉。
+          # rules.mk 仅读 .config 中的 CONFIG_CCACHE 值，不依赖 menuconfig 可见性，
+          # 因此被清掉时直接写回即可确定启用。
+          if ! grep -q '^CONFIG_CCACHE=y' .config; then
+            echo "::warning::defconfig 未保留 CONFIG_CCACHE，已强制写回 .config"
+            sed -i '/^# CONFIG_CCACHE is not set$/d' .config
+            printf '\nCONFIG_CCACHE=y\n' >> .config
+          fi
+          grep -q '^CONFIG_CCACHE=y' .config || {
+            echo "::error::ccache 未能启用，构建中止"; exit 1
+          }
+          command -v ccache > /dev/null || {
+            echo "::error::ccache 二进制缺失，请检查 Initialization environment 的依赖安装"; exit 1
+          }
+          ccache --version | head -n 1
+          # 检测 config.seed 里写了 =y、但 defconfig 后未生效的符号：
+          # 未知符号 / 包名写错 / 依赖不满足都会被 Kconfig 静默丢弃且不报错，
+          # 这里把差集暴露到日志与 run summary，避免"配了却没生效"。
+          # 正则需含连字符：OpenWrt 的 CONFIG_PACKAGE_luci-app-... 保留了 '-'。
+          MISSING=$(comm -23 \
+            <(grep -E '^CONFIG_[A-Za-z0-9_-]+=y$' config.seed | cut -d= -f1 | sort -u) \
+            <(grep -E '^CONFIG_[A-Za-z0-9_-]+=' .config | cut -d= -f1 | sort -u))
+          if [ -n "${MISSING}" ]; then
+            echo "::warning::config.seed 中以下 =y 符号在 defconfig 后未生效（可能已废弃、包名有误或依赖不满足）："
+            echo "${MISSING}"
+            {
+              echo "### 未生效的配置符号"
+              echo '```'
+              echo "${MISSING}"
+              echo '```'
+            } >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "All config.seed symbols survived defconfig"
+          fi
 
       - name: Make download
         run: |
-          make download -j8
-          find dl -size -1024c -exec rm -f {} \;
+          # 并行度与 CPU 核数挂钩（上限 8），避免固定 -j8 在不同规格 runner 上失衡。
+          DOWNLOAD_JOBS=$(( $(nproc) > 8 ? 8 : $(nproc) ))
+          echo "Downloading with -j${DOWNLOAD_JOBS}"
+          make download -j"${DOWNLOAD_JOBS}" || make download -j1 V=s
+          # 小于 1KB 的文件通常是下载失败的残片：清理后立即补下一次，
+          # 而不是留到编译阶段才发现缺包。
+          find dl -type f -size -1024c -delete
+          make download -j"${DOWNLOAD_JOBS}" || echo "::warning::部分源码包可能未就绪，编译阶段将按需重试"
 
       - name: Compile firmware
         run: |
-          make -j$(nproc) || make -j1 V=s
+          # 并行度封顶 4：部分包单进程内存占用可达数 GB，
+          # 拉满 nproc 容易触发内存压力；失败后再单线程重跑以保留详细日志。
+          BUILD_JOBS=$(( $(nproc) > 4 ? 4 : $(nproc) ))
+          echo "Building with -j${BUILD_JOBS} ($(nproc) CPUs available)"
+          set -o pipefail
+          make -j"${BUILD_JOBS}" 2>&1 | tee build.log || make -j1 V=s 2>&1 | tee -a build.log
           echo "======================="
           echo "Space usage:"
           echo "======================="
@@ -373,40 +232,149 @@ jobs:
           du -h --max-depth=1 ./build_dir
           du -h --max-depth=1 ./bin
 
+      - name: Report ccache statistics
+        if: always()
+        # 日志里直接看到命中数与缓存体积，确认 ccache 确实被调用，
+        # 而不是"以为启用了"。
+        run: |
+          echo "=== ccache statistics ==="
+          ccache -s || true
+
       - name: Prepare artifact
         run: |
-          mkdir -p ./artifact/firmware
-          mkdir -p ./artifact/package
-          mkdir -p ./artifact/buildinfo
-          rm -rf $(find ./bin/targets/ -type d -name "packages")
-          cp -rf $(find ./bin/targets/ -type f) ./artifact/firmware/
-          cp -rf $(find ./bin/packages/ -type f -name "*.ipk") ./artifact/package/
-          cp -rf $(find ./bin/targets/ -type f -name "*.buildinfo" -o -name "*.manifest") ./artifact/buildinfo/
+          mkdir -p ./artifact/package ./artifact/buildinfo
+          find ./bin/targets/ -type d -name "packages" -prune -exec rm -rf {} \;
+          find ./bin/packages/ -type f -name "*.ipk" -exec cp -t ./artifact/package/ {} +
+          find ./bin/targets/ -type f \( -name "*.buildinfo" -o -name "*.manifest" \) -exec cp -t ./artifact/buildinfo/ {} +
 
       - name: Upload buildinfo
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: OpenWrt_buildinfo
           path: ./artifact/buildinfo/
+          if-no-files-found: warn
+          retention-days: 14
+          compression-level: 9
 
       - name: Upload package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: OpenWrt_package
           path: ./artifact/package/
+          if-no-files-found: warn
+          retention-days: 14
+          compression-level: 9
 
       - name: Upload firmware
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: OpenWrt_firmware
+          # 有意保留完整 bin/targets/：publish_release 依赖平铺后的完整文件集；
+          # .buildinfo/.manifest 体积极小但保留可追溯性，排除收益不足。
           path: ./bin/targets/
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 9
+
+      - name: Diagnose build failure
+        if: failure() || cancelled()
+        # 让下一次失败可归因：cgroup v2 的 oom_kill 计数是 OOM 的硬证据，
+        # 配合内存/磁盘/大目录快照，不必再靠猜测判断是不是 swap 引起。
+        run: |
+          echo "=== memory / OOM evidence ==="
+          free -h || true
+          if [ -r /sys/fs/cgroup/memory.events ]; then
+            cat /sys/fs/cgroup/memory.events
+          else
+            echo "memory.events unavailable"
+          fi
+          echo "=== disk ==="
+          df -hT || true
+          echo "=== largest build dirs ==="
+          du -h --max-depth=1 ./build_dir 2>/dev/null | sort -h | tail -n 15 || true
+
+      - name: Upload build log
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: OpenWrt_buildlog
+          path: build.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Save downloads and ccache
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            dl
+            .ccache
+          key: ${{ runner.os }}-owrt-${{ steps.runner_image.outputs.tag }}-${{ hashFiles('config.seed', 'feeds.conf.default') }}
   
 
-      - name: Upload release asset
-        if: github.event == 'release'
-        uses: svenstaro/upload-release-action@v2
+  publish_release:
+    name: Publish firmware to Release
+    # 只在 release 事件运行；build job 被跳过或失败时，本 job 由 needs 自动跳过。
+    if: github.event_name == 'release'
+    needs: build_openwrt
+    runs-on: ubuntu-26.04
+    # 写权限只授予本 job，且本 job 不执行任何外部源码或编译脚本。
+    permissions:
+      contents: write
+    env:
+      # gh CLI 需要显式 token；直接取事件里的 tag 名，
+      # 不再依赖对 github.ref 的字符串剥离，减少一层隐式行为。
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+
+    steps:
+      - name: Download firmware artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          repo_token: ${{ secrets.YOURTOKEN }}
-          file: ./artifact/firmware/*
-          tag: ${{ github.ref }}
+          name: OpenWrt_firmware
+          path: ./firmware
+
+      - name: Flatten firmware files
+        # artifact 保留 bin/targets/<target>/<subtarget>/ 目录结构，
+        # 而 file_glob 只匹配单层，故先平铺到 release-assets/。
+        run: |
+          mkdir -p ./release-assets
+          find ./firmware -type f -exec cp -t ./release-assets/ {} +
+
+      - name: Validate release context
+        # 把静默失败变成带定位信息的显式失败：
+        # tag 非空、release 真实存在、待上传文件非空。
+        run: |
+          set -euo pipefail
+          if [ -z "${RELEASE_TAG}" ]; then
+            echo "::error::RELEASE_TAG 为空，事件上下文不是 release"; exit 1
+          fi
+          if ! gh release view "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" --json tagName > /dev/null; then
+            echo "::error::找不到 release ${RELEASE_TAG}"; exit 1
+          fi
+          FILE_COUNT=$(find ./release-assets -type f | wc -l)
+          if [ "${FILE_COUNT}" -eq 0 ]; then
+            echo "::error::artifact 展开后无文件可上传"; exit 1
+          fi
+          echo "Tag: ${RELEASE_TAG} ; files to upload: ${FILE_COUNT}"
+          echo "### Release publish" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Tag: ${RELEASE_TAG} ; files: ${FILE_COUNT}" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload release asset
+        uses: svenstaro/upload-release-action@29e53e917877a24fad85510ded594ab3c9ca12de # v2
+        with:
+          # 内置 GITHUB_TOKEN 即可，无需自建 PAT。
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./release-assets/*
+          tag: ${{ github.event.release.tag_name }}
           file_glob: true
+
+      - name: Verify uploaded assets
+        # 回读 Release API，确认资产确实写入；否则明确失败而不是"看似成功"。
+        run: |
+          set -euo pipefail
+          COUNT=$(gh release view "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" --json assets --jq '.assets | length')
+          if [ "${COUNT}" -eq 0 ]; then
+            echo "::error::release ${RELEASE_TAG} 中没有资产，上传未生效"; exit 1
+          fi
+          echo "Verified ${COUNT} asset(s) on release ${RELEASE_TAG}"
