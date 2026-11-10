@@ -29,7 +29,9 @@ concurrency:
 jobs:
   dry_run_publish:
     name: Dry-run firmware publish pipeline
-    runs-on: ubuntu-26.04
+    # 演练对象是 publish_release 那一段（下载 → 平铺 → 校验），它不编译；
+    # 因此镜像与被演练方保持一致：publish_release 用 ubuntu-latest，这里也用。
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,11 +65,46 @@ jobs:
               echo "::error::主 workflow 仍存在 [$bad]"; exit 1
             }
           done
-          CLEAN_LINE=$(grep -n -F -- '- name: Free Disk Space (Ubuntu)' "$MAIN" | head -n 1 | cut -d: -f1)
-          INIT_LINE=$(grep -n -F -- '- name: Initialization environment' "$MAIN" | head -n 1 | cut -d: -f1)
-          if [ "$CLEAN_LINE" -ge "$INIT_LINE" ]; then
-            echo "::error::磁盘清理必须早于依赖安装，否则 large-packages 会删掉刚装的 llvm/clang"; exit 1
+          # 提取行号必须容错：grep 无匹配返回 1，配合 set -o pipefail 会让脚本
+          # 在打印错误信息之前就中止，失败原因反而变得不可读。
+          CLEAN_LINE=$(grep -n -F -- '- name: Free Disk Space (Ubuntu)' "$MAIN" | head -n 1 | cut -d: -f1 || true)
+          INIT_LINE=$(grep -n -F -- '- name: Initialization environment' "$MAIN" | head -n 1 | cut -d: -f1 || true)
+          if [ -z "$CLEAN_LINE" ] || [ -z "$INIT_LINE" ] || [ "$CLEAN_LINE" -ge "$INIT_LINE" ]; then
+            echo "::error::磁盘清理步骤缺失或晚于依赖安装（clean=$CLEAN_LINE init=$INIT_LINE）：large-packages 会删掉刚装的 llvm/clang"
+            exit 1
           fi
+
+          # 缓存只是加速手段，不得成为构建门禁。
+          if grep -Fq 'ccache 未能启用，构建中止' "$MAIN"; then
+            echo "::error::主 workflow 仍把 ccache 当门禁：缓存失效不应导致构建失败"; exit 1
+          fi
+          # dl 缓存的 restore/save key 必须逐字一致，否则只能读、永远写不进去。
+          RKEY=$(grep -A20 -F -- '- name: Restore downloads' "$MAIN" \
+                 | grep -F 'key:' | head -n 1 | sed 's/^ *//' || true)
+          SKEY=$(grep -A20 -F -- '- name: Save downloads' "$MAIN" \
+                 | grep -F 'key:' | head -n 1 | sed 's/^ *//' || true)
+          if [ -z "$RKEY" ] || [ -z "$SKEY" ] || [ "$RKEY" != "$SKEY" ]; then
+            echo "::error::dl 缓存 restore/save key 不一致：[$RKEY] vs [$SKEY]"; exit 1
+          fi
+          # 精确命中后必须跳过保存：缓存不可覆盖，重复 save 只是白传上 GB 数据。
+          grep -A20 -F -- '- name: Save downloads' "$MAIN" \
+            | grep -Fq "steps.restore_dl.outputs.cache-hit != 'true'" || {
+            echo "::error::Save downloads 缺少 cache-hit 守卫，命中时仍会重复上传整份 dl"; exit 1
+          }
+          # go-mod-cache 必须在下载前剔除，否则跨 feed 漂移会让 Go 包编译失败。
+          PURGE_LINE=$(grep -n -F 'rm -rf dl/go-mod-cache' "$MAIN" | head -n 1 | cut -d: -f1 || true)
+          DL_LINE=$(grep -n -F -- '- name: Make download' "$MAIN" | cut -d: -f1)
+          if [ -z "$PURGE_LINE" ] || [ -z "$DL_LINE" ] || [ "$PURGE_LINE" -ge "$DL_LINE" ]; then
+            echo "::error::dl/go-mod-cache 未在 Make download 之前清空（purge=$PURGE_LINE download=$DL_LINE）"; exit 1
+          fi
+          # ccache 能否生效取决于 config.seed 里这两个符号。
+          grep -Fq 'CONFIG_DEVEL=y' config.seed || {
+            echo "::error::config.seed 缺少 CONFIG_DEVEL=y，ccache 会被 defconfig 丢弃"; exit 1
+          }
+          grep -Fq 'CONFIG_CCACHE=y' config.seed || {
+            echo "::error::config.seed 缺少 CONFIG_CCACHE=y"; exit 1
+          }
+
           echo "Static self-check OK"
 
       - name: Download firmware artifact
