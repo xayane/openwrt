@@ -1,0 +1,113 @@
+# Release 发布链路演练：不创建、不修改任何 release / tag / artifact，
+# 也不触发 OpenWrt 全量编译。
+# 应放置于仓库 .github/workflows/release-dryrun.yml
+name: Release publish dry-run
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: '取回 OpenWrt_firmware 的已成功构建 run ID'
+        required: true
+        type: string
+        default: '42364311687'
+      release_tag:
+        description: '演练用的 tag 名（仅用于日志，不会创建 tag）'
+        required: true
+        type: string
+        default: 'ci-dryrun'
+
+# 全程只读：不授予 contents: write。
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: release-dryrun
+  cancel-in-progress: false
+
+jobs:
+  dry_run_publish:
+    name: Dry-run firmware publish pipeline
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Static self-check of main workflow
+        # 一次性核对主链路的关键加固项与共享命令；主 workflow 改动后此处会失败提醒同步。
+        run: |
+          set -euo pipefail
+          MAIN=.github/workflows/openwrt-ci.yml
+          for cmd in \
+            'name: OpenWrt_firmware' \
+            'find ./firmware -type f -exec cp -t ./release-assets/ {} +' \
+            'FILE_COUNT=$(find ./release-assets -type f | wc -l)' \
+            "if: github.event_name == 'release'" \
+            'swap-storage: false' \
+            'large-packages: true' \
+            'Report disk budget' \
+            'Diagnose build failure'; do
+            grep -Fq "$cmd" "$MAIN" || {
+              echo "::error::主 workflow 缺少 [$cmd]，请同步 dry-run"; exit 1
+            }
+          done
+          for bad in 'YOURTOKEN' "github.event == 'release'" 'artifact/firmware'; do
+            ! grep -Fq "$bad" "$MAIN" || {
+              echo "::error::主 workflow 仍存在 [$bad]"; exit 1
+            }
+          done
+          CLEAN_LINE=$(grep -n -F -- '- name: Free Disk Space (Ubuntu)' "$MAIN" | head -n 1 | cut -d: -f1)
+          INIT_LINE=$(grep -n -F -- '- name: Initialization environment' "$MAIN" | head -n 1 | cut -d: -f1)
+          if [ "$CLEAN_LINE" -ge "$INIT_LINE" ]; then
+            echo "::error::磁盘清理必须早于依赖安装，否则 large-packages 会删掉刚装的 llvm/clang"; exit 1
+          fi
+          echo "Static self-check OK"
+
+      - name: Download firmware artifact
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: OpenWrt_firmware
+          path: ./firmware
+          run-id: ${{ inputs.source_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # 跨 run 下载需 actions:read；若报 403，改用具备该权限的 PAT。
+
+      - name: Flatten firmware files
+        run: |
+          set -euo pipefail
+          mkdir -p ./release-assets
+          find ./firmware -type f -exec cp -t ./release-assets/ {} +
+
+      - name: Validate release context
+        # 与主链路同名步骤共享校验逻辑；dry-run 不调用 Release API 写入。
+        run: |
+          set -euo pipefail
+          if [ -z "${RELEASE_TAG}" ]; then
+            echo "::error::RELEASE_TAG 为空"; exit 1
+          fi
+          FILE_COUNT=$(find ./release-assets -type f | wc -l)
+          if [ "${FILE_COUNT}" -eq 0 ]; then
+            echo "::error::artifact 展开后无文件可上传"; exit 1
+          fi
+          echo "Tag: ${RELEASE_TAG} ; files: ${FILE_COUNT}"
+          echo "### Release dry-run" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Source run: ${SOURCE_RUN_ID}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Tag: ${RELEASE_TAG}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Assets that WOULD be uploaded: ${FILE_COUNT}" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Dry-run asset manifest
+        # 只列清单，不上传；验证 file_glob 能匹配到的文件名与数量。
+        run: |
+          set -euo pipefail
+          echo "=== assets (no upload performed) ==="
+          find ./release-assets -maxdepth 1 -type f -printf '%f %s bytes\n' | sort
+          echo "=== token capability (read-only probe) ==="
+          gh api "repos/${GITHUB_REPOSITORY}" --jq '.permissions' || true
+          echo "DRY-RUN COMPLETE: 未创建、未修改任何 release / tag / artifact"
