@@ -28,7 +28,7 @@ env:
   # 其余 13 项为模板残留，从未被任何步骤引用。
   TZ: Asia/Shanghai
   # 限制 ccache 体积，避免缓存膨胀占用磁盘与 cache 配额。
-  CCACHE_MAXSIZE: 20G
+  CCACHE_MAXSIZE: 10G
 
 permissions:
   contents: read
