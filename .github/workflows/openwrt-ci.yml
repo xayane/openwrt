@@ -28,7 +28,7 @@ env:
   # 其余 13 项为模板残留，从未被任何步骤引用。
   TZ: Asia/Shanghai
   # 限制 ccache 体积，避免缓存膨胀占用磁盘与 cache 配额。
-  CCACHE_MAXSIZE: 10G
+  CCACHE_MAXSIZE: 2G
 
 permissions:
   contents: read
@@ -41,7 +41,6 @@ jobs:
 
     runs-on: ubuntu-26.04
     timeout-minutes: 300
-
     if: github.event_name != 'pull_request'
 
 
@@ -60,9 +59,6 @@ jobs:
           free -h
           echo "--------------------------硬盘信息--------------------------"
           df -hT
-          
-      # 磁盘清理统一由下方的 "Free Disk Space (Ubuntu)" 步骤负责，
-      # 避免多套策略互相抵消（详见该步骤注释）。
 
       - name: Checkout
         # 不指定 ref：默认检出触发本次运行的 commit / tag，
@@ -70,9 +66,6 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Free Disk Space (Ubuntu)
-        # 本步骤必须排在 Initialization environment 之前：
-        # large-packages 会 apt-get remove '^llvm-.*'，若在装完依赖后执行
-        # 会删掉刚装的 llvm/clang；放在装依赖之前则安全，且能多释放约 6 GB。
         uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
         with:
           large-packages: true
@@ -86,29 +79,38 @@ jobs:
           # 却会让后续引入 setup-node/setup-python 时重新下载或找不到固定版本。
           preinstalled-runtimes: false
 
-      - name: Detect runner OS version
+      - name: Detect runner image and cache epoch
         id: runner_image
-        # 编译环境固定为 ubuntu-26.04；把实际 OS 版本放进 cache key，
-        # 将来调整 runner 版本时缓存自动失效，无需人工同步 key。
         run: |
           . /etc/os-release
           echo "tag=${VERSION_ID}" >> "${GITHUB_OUTPUT}"
+          # dl 内容只增不减、而缓存 key 不可覆盖：不换代就会永远停在
+          # 第一次保存的那批源码包上，之后新增的每次都要重下。
+          # 按月换代 = 自动刷新 + 缓存自然过期，无需手工清缓存。
+          echo "epoch=$(date -u +%Y%m)" >> "${GITHUB_OUTPUT}"
 
-      - name: Restore downloads and ccache
-        # 显式拆成 restore + save：save 用 if: always()，
-        # 构建失败时也能保存 .ccache / dl，避免下次仍要全量重编。
+      - name: Restore ccache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: |
-            dl
-            .ccache
-          key: ${{ runner.os }}-owrt-${{ steps.runner_image.outputs.tag }}-${{ hashFiles('config.seed', 'feeds.conf.default') }}
+          path: .ccache
+          key: ${{ runner.os }}-owrt-ccache-${{ steps.runner_image.outputs.tag }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            ${{ runner.os }}-owrt-${{ steps.runner_image.outputs.tag }}-
+            ${{ runner.os }}-owrt-ccache-${{ steps.runner_image.outputs.tag }}-
 
-      # 职责划分：本步骤只负责安装编译依赖；
-      # 系统级目录/包清理由前面的 Free Disk Space 步骤统一负责（它带兜底）。
-      # 26.04 上重复的 apt purge 会因 glob 无匹配返回 100，直接打挂 job。
+      - name: Restore downloads
+        id: restore_dl
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: dl
+          key: ${{ runner.os }}-owrt-dl-${{ steps.runner_image.outputs.tag }}-${{ steps.runner_image.outputs.epoch }}-${{ hashFiles('config.seed', 'feeds.conf.default') }}
+          restore-keys: |
+            ${{ runner.os }}-owrt-dl-${{ steps.runner_image.outputs.tag }}-
+
+      - name: Drop stale go module cache
+        run: |
+          rm -rf dl/go-mod-cache
+          echo "dl/go-mod-cache 已清空，将由 make download 重新拉取"
+
       - name: Initialization environment
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -147,6 +149,28 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      - name: Record feed revisions
+        # feeds 有意保持浮动（不做 commit pin），构建结果随上游变动。
+        # 把每个 feed 的 HEAD 写进 summary：出问题时能直接定位"那天用的是哪个提交"，
+        # 不必事后靠猜，也不用重跑复现。
+        run: |
+          {
+            echo "### Feed revisions"
+            echo ""
+            echo "| feed | commit |"
+            echo "| --- | --- |"
+            for dir in feeds/*/; do
+              name=$(basename "${dir}")
+              commit=$(git -C "${dir}" rev-parse --short=12 HEAD 2>/dev/null || echo 'n/a')
+              echo "| ${name} | \`${commit}\` |"
+            done
+          } >> "${GITHUB_STEP_SUMMARY}"
+          echo "=== feed revisions ==="
+          for dir in feeds/*/; do
+            printf '%-20s %s\n' "$(basename "${dir}")" \
+              "$(git -C "${dir}" rev-parse --short=12 HEAD 2>/dev/null || echo n/a)"
+          done
+
       # 上游仓库有意保持浮动主分支（经确认不做 commit pin）；
       # --depth 1 已避免拉取完整历史。
       - name: Get new themes and applications
@@ -173,22 +197,27 @@ jobs:
         run: |
           cp config.seed .config
           make defconfig
-          # Kconfig 中 "config CCACHE ... if DEVEL" 的 if 只是 prompt 可见性，
-          # 符号本身没有 depends on；但 defconfig 仍可能把该值清掉。
-          # rules.mk 仅读 .config 中的 CONFIG_CCACHE 值，不依赖 menuconfig 可见性，
-          # 因此被清掉时直接写回即可确定启用。
-          if ! grep -q '^CONFIG_CCACHE=y' .config; then
-            echo "::warning::defconfig 未保留 CONFIG_CCACHE，已强制写回 .config"
-            sed -i '/^# CONFIG_CCACHE is not set$/d' .config
-            printf '\nCONFIG_CCACHE=y\n' >> .config
+          # ccache 由 config.seed 里的 CONFIG_DEVEL=y + CONFIG_CCACHE=y 原生启用。
+          # config/Config-devel.in:135 的写法是 `bool "Use ccache" if DEVEL`：
+          # 该 if 只作用于 prompt（可见性），DEVEL=n 时符号不可见，
+          # defconfig 会把 .config 里的值丢掉（已实测）；事后再 append 同样无效 ——
+          # make 重新处理配置时还会被清掉。DEVEL=y 让符号可见，值才真正保留。
+          #
+          # 这是加速开关，不是正确性前提：未生效只告警，绝不让构建失败。
+          if grep -q '^CONFIG_CCACHE=y' .config; then
+            echo "ccache: enabled (CONFIG_CCACHE=y 已由 defconfig 保留)"
+          else
+            echo "::warning::CONFIG_CCACHE 未在 defconfig 后保留，本次不使用 ccache（仅影响耗时，不影响产物）"
+            {
+              echo "### ccache"
+              echo "未启用：CONFIG_CCACHE 未在 defconfig 后保留，仅影响构建耗时。"
+            } >> "${GITHUB_STEP_SUMMARY}"
           fi
-          grep -q '^CONFIG_CCACHE=y' .config || {
-            echo "::error::ccache 未能启用，构建中止"; exit 1
-          }
-          command -v ccache > /dev/null || {
-            echo "::error::ccache 二进制缺失，请检查 Initialization environment 的依赖安装"; exit 1
-          }
-          ccache --version | head -n 1
+          if command -v ccache > /dev/null; then
+            ccache --version | head -n 1
+          else
+            echo "::warning::未找到 ccache 二进制，本次不使用 ccache（仅影响耗时，不影响产物）"
+          fi
           # 检测 config.seed 里写了 =y、但 defconfig 后未生效的符号：
           # 未知符号 / 包名写错 / 依赖不满足都会被 Kconfig 静默丢弃且不报错，
           # 这里把差集暴露到日志与 run summary，避免"配了却没生效"。
@@ -197,8 +226,16 @@ jobs:
             <(grep -E '^CONFIG_[A-Za-z0-9_-]+=y$' config.seed | cut -d= -f1 | sort -u) \
             <(grep -E '^CONFIG_[A-Za-z0-9_-]+=' .config | cut -d= -f1 | sort -u))
           if [ -n "${MISSING}" ]; then
-            echo "::warning::config.seed 中以下 =y 符号在 defconfig 后未生效（可能已废弃、包名有误或依赖不满足）："
-            echo "${MISSING}"
+            echo "::warning::config.seed 中以下 =y 符号在 defconfig 后未生效："
+            while IFS= read -r sym; do
+              [ -z "${sym}" ] && continue
+              actual=$(grep -m1 -E "^# ${sym} is not set$|^${sym}=" .config || true)
+              if [ -n "${actual}" ]; then
+                echo "  ${sym} -> ${actual}  (被 defconfig 关闭)"
+              else
+                echo "  ${sym} -> 当前源码树中不存在该符号（可能已废弃或改名）"
+              fi
+            done <<< "${MISSING}"
             {
               echo "### 未生效的配置符号"
               echo '```'
@@ -210,6 +247,7 @@ jobs:
           fi
 
       - name: Make download
+        id: download
         run: |
           # 并行度与 CPU 核数挂钩（上限 8），避免固定 -j8 在不同规格 runner 上失衡。
           DOWNLOAD_JOBS=$(( $(nproc) > 8 ? 8 : $(nproc) ))
@@ -221,6 +259,7 @@ jobs:
           make download -j"${DOWNLOAD_JOBS}" || echo "::warning::部分源码包可能未就绪，编译阶段将按需重试"
 
       - name: Compile firmware
+        id: compile
         run: |
           # 并行度封顶 4：部分包单进程内存占用可达数 GB，
           # 拉满 nproc 容易触发内存压力；失败后再单线程重跑以保留详细日志。
@@ -239,11 +278,16 @@ jobs:
 
       - name: Report ccache statistics
         if: always()
-        # 日志里直接看到命中数与缓存体积，确认 ccache 确实被调用，
-        # 而不是"以为启用了"。
+        # 判断 ccache 是否真被调用，用"目录里有没有产物"这一事实，
+        # 而不是看配置项写没写。全程只告警，不改变构建结论。
         run: |
           echo "=== ccache statistics ==="
           ccache -s || true
+          if [ -d "${CCACHE_DIR}" ] && [ -n "$(ls -A "${CCACHE_DIR}" 2>/dev/null)" ]; then
+            echo "ccache storage: non-empty ($(du -sh "${CCACHE_DIR}" 2>/dev/null | cut -f1))"
+          else
+            echo "::warning::ccache 目录为空 —— 本次编译未经过 ccache（仅影响耗时，不影响产物）"
+          fi
 
       - name: Prepare artifact
         run: |
@@ -307,28 +351,34 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
-      - name: Save downloads and ccache
+      - name: Drop stale go module cache before saving
         if: always()
+        run: rm -rf dl/go-mod-cache
+
+      - name: Save downloads
+        if: always() && steps.download.outcome != 'skipped' && steps.restore_dl.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: |
-            dl
-            .ccache
-          key: ${{ runner.os }}-owrt-${{ steps.runner_image.outputs.tag }}-${{ hashFiles('config.seed', 'feeds.conf.default') }}
+          path: dl
+          # 必须与 Restore downloads 的 key 逐字一致；dry-run 会静态核对这一点。
+          key: ${{ runner.os }}-owrt-dl-${{ steps.runner_image.outputs.tag }}-${{ steps.runner_image.outputs.epoch }}-${{ hashFiles('config.seed', 'feeds.conf.default') }}
+
+      - name: Save ccache
+        if: always() && steps.compile.outcome != 'skipped'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .ccache
+          key: ${{ runner.os }}-owrt-ccache-${{ steps.runner_image.outputs.tag }}-${{ github.run_id }}-${{ github.run_attempt }}
   
 
   publish_release:
     name: Publish firmware to Release
-    # 只在 release 事件运行；build job 被跳过或失败时，本 job 由 needs 自动跳过。
     if: github.event_name == 'release'
     needs: build_openwrt
-    runs-on: ubuntu-26.04
-    # 写权限只授予本 job，且本 job 不执行任何外部源码或编译脚本。
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
-      # gh CLI 需要显式 token；直接取事件里的 tag 名，
-      # 不再依赖对 github.ref 的字符串剥离，减少一层隐式行为。
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RELEASE_TAG: ${{ github.event.release.tag_name }}
 
@@ -383,3 +433,5 @@ jobs:
             echo "::error::release ${RELEASE_TAG} 中没有资产，上传未生效"; exit 1
           fi
           echo "Verified ${COUNT} asset(s) on release ${RELEASE_TAG}"
+
+
