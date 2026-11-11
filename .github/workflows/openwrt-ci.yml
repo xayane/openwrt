@@ -17,6 +17,18 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        # 留空 = 只构建、不发布；填了 = 构建成功后由 publish job 自动建 tag 与 release。
+        description: '构建成功后自动发布的版本号，如 v1.1.0；留空则只构建不发布'
+        required: false
+        type: string
+        default: ''
+      prerelease:
+        description: '标记为预发布（不占用 Latest）'
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,10 +36,8 @@ concurrency:
   cancel-in-progress: ${{ github.event_name != 'release' }}
 
 env:
-  # TZ 由 libc 自动读取，决定日志时间戳时区，需保留；
-  # 其余 13 项为模板残留，从未被任何步骤引用。
   TZ: Asia/Shanghai
-  # 限制 ccache 体积，避免缓存膨胀占用磁盘与 cache 配额。
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
   CCACHE_MAXSIZE: 2G
 
 permissions:
@@ -35,17 +45,17 @@ permissions:
 
 jobs:
   build_openwrt:
-    # 权限继承顶层的 contents: read；
-    # 只有 publish_release job 需要 contents: write。
+
     name: Build OpenWrt firmware
 
     runs-on: ubuntu-26.04
     timeout-minutes: 300
+
     if: github.event_name != 'pull_request'
 
 
     steps:
-    
+
       - name: Check Server Performance
         run: |
           echo "警告⚠"
@@ -60,10 +70,27 @@ jobs:
           echo "--------------------------硬盘信息--------------------------"
           df -hT
 
+      # 磁盘清理统一由下方的 "Free Disk Space (Ubuntu)" 步骤负责，
+      # 避免多套策略互相抵消（详见该步骤注释）。
+
       - name: Checkout
-        # 不指定 ref：默认检出触发本次运行的 commit / tag，
-        # 保证 release 产物与所发布的 tag 一致。
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Record build provenance
+        run: |
+          set -euo pipefail
+          HEAD_SHA=$(git rev-parse HEAD)
+          echo "GITHUB_SHA=${GITHUB_SHA} HEAD=${HEAD_SHA} REF=${GITHUB_REF}"
+          if [ "${HEAD_SHA}" != "${GITHUB_SHA}" ]; then
+            echo "::error::检出 commit ${HEAD_SHA} 与触发 commit ${GITHUB_SHA} 不一致"
+            exit 1
+          fi
+          {
+            echo "### Build provenance"
+            echo "- commit: \`${HEAD_SHA}\`"
+            echo "- ref: \`${GITHUB_REF}\`"
+            echo "- run: \`${GITHUB_RUN_ID}\` / attempt \`${GITHUB_RUN_ATTEMPT}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
@@ -131,9 +158,7 @@ jobs:
           sudo -E apt clean
           df -hT
 
-      - name: Report disk budget
-        # 环境准备完成后的可用空间写进 run summary，低于建议值时告警。
-        # 由每次构建自己给出数据，不靠推算。
+      - name: Report disk budget。
         run: |
           AVAIL_GB=$(df -BG --output=avail / | tail -n 1 | tr -dc '0-9')
           echo "Available before build: ${AVAIL_GB} GiB"
@@ -150,9 +175,6 @@ jobs:
           ./scripts/feeds install -a
 
       - name: Record feed revisions
-        # feeds 有意保持浮动（不做 commit pin），构建结果随上游变动。
-        # 把每个 feed 的 HEAD 写进 summary：出问题时能直接定位"那天用的是哪个提交"，
-        # 不必事后靠猜，也不用重跑复现。
         run: |
           {
             echo "### Feed revisions"
@@ -171,8 +193,6 @@ jobs:
               "$(git -C "${dir}" rev-parse --short=12 HEAD 2>/dev/null || echo n/a)"
           done
 
-      # 上游仓库有意保持浮动主分支（经确认不做 commit pin）；
-      # --depth 1 已避免拉取完整历史。
       - name: Get new themes and applications
         run: |
           rm -rf package/feeds/luci/luci-theme-argon
@@ -189,11 +209,9 @@ jobs:
           git clone --depth 1 https://github.com/EasyTier/luci-app-easytier package/feeds/luci/luci-app-easytier
           git clone --depth 1 https://github.com/zzsj0928/luci-app-pushbot package/feeds/luci/luci-app-pushbot
           git clone --depth 1 https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic package/feeds/luci/luci-app-unblockneteasemusic
-          
+
 
       - name: Load build config
-        # 配置作为独立文件纳入版本控制：可 diff / review，
-        # 并作为 actions/cache 的 hashFiles 输入。
         run: |
           cp config.seed .config
           make defconfig
@@ -278,8 +296,6 @@ jobs:
 
       - name: Report ccache statistics
         if: always()
-        # 判断 ccache 是否真被调用，用"目录里有没有产物"这一事实，
-        # 而不是看配置项写没写。全程只告警，不改变构建结论。
         run: |
           echo "=== ccache statistics ==="
           ccache -s || true
@@ -327,8 +343,6 @@ jobs:
 
       - name: Diagnose build failure
         if: failure() || cancelled()
-        # 让下一次失败可归因：cgroup v2 的 oom_kill 计数是 OOM 的硬证据，
-        # 配合内存/磁盘/大目录快照，不必再靠猜测判断是不是 swap 引起。
         run: |
           echo "=== memory / OOM evidence ==="
           free -h || true
@@ -364,23 +378,33 @@ jobs:
           key: ${{ runner.os }}-owrt-dl-${{ steps.runner_image.outputs.tag }}-${{ steps.runner_image.outputs.epoch }}-${{ hashFiles('config.seed', 'feeds.conf.default') }}
 
       - name: Save ccache
+        # 滚动 key 含 run_id + run_attempt：同一 run 的「重跑」run_id 不变，
+        # 只带 run_id 会在重跑时撞上已有条目，增量就存不进去了。
         if: always() && steps.compile.outcome != 'skipped'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .ccache
           key: ${{ runner.os }}-owrt-ccache-${{ steps.runner_image.outputs.tag }}-${{ github.run_id }}-${{ github.run_attempt }}
-  
+
 
   publish_release:
     name: Publish firmware to Release
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '')
     needs: build_openwrt
     runs-on: ubuntu-latest
     permissions:
       contents: write
     env:
+      # gh CLI 需要显式 token。
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      RELEASE_TAG: ${{ github.event.release.tag_name }}
+      # 两个来源分开命名，再由 Resolve release tag 归一化成 RELEASE_TAG。
+      # 不在表达式里写 `a && b || c` 当三元用：空串/null 的类型强制转换
+      # 会让它在中段取值时静默走错分支。
+      EVENT_TAG: ${{ github.event.release.tag_name }}
+      INPUT_TAG: ${{ inputs.release_tag }}
+      INPUT_PRERELEASE: ${{ inputs.prerelease }}
+      # 本次被构建的 commit。tag 必须落在它上面 —— 这是产物与 tag 对应的唯一基准。
+      BUILT_SHA: ${{ github.sha }}
 
     steps:
       - name: Download firmware artifact
@@ -396,13 +420,80 @@ jobs:
           mkdir -p ./release-assets
           find ./firmware -type f -exec cp -t ./release-assets/ {} +
 
+      - name: Resolve release tag
+        # 归一化 tag 来源并做字符集校验：该值会进入 git ref 与 gh 命令，
+        # 只接受 [A-Za-z0-9][A-Za-z0-9._-]*，排除 /、前导 . -、以及 .. 段。
+        run: |
+          set -euo pipefail
+          TAG="${EVENT_TAG:-}"
+          if [ -z "${TAG}" ]; then TAG="${INPUT_TAG:-}"; fi
+          if [ -z "${TAG}" ]; then
+            echo "::error::既无 release 事件的 tag，也未提供 release_tag 输入"; exit 1
+          fi
+          case "${TAG}" in
+            */*|.*|-*|*..*)
+              echo "::error::release_tag 非法：${TAG}（只允许字母数字与 . _ -，不得含 / 或以 . - 开头）"
+              exit 1 ;;
+          esac
+          if ! printf '%s' "${TAG}" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]*$'; then
+            echo "::error::release_tag 含非法字符：${TAG}"; exit 1
+          fi
+          echo "RELEASE_TAG=${TAG}" >> "${GITHUB_ENV}"
+          echo "Tag=${TAG} ; built commit=${BUILT_SHA} ; event=${GITHUB_EVENT_NAME}"
+
+      - name: Create release and tag at built commit
+        # 仅自动路径（dispatch）执行；release 事件路径下 release 已存在，无需创建。
+        if: github.event_name == 'workflow_dispatch'
+        # tag 指向 ${BUILT_SHA}，不是 master：编译要 2 小时以上，期间 master 可能已前进，
+        # 指向 master 会让「tag 名」与「实际源码」错位。这是本步骤存在的全部理由。
+        run: |
+          set -euo pipefail
+          REPO="${GITHUB_REPOSITORY}"
+          NOTES=$(printf 'Automated build.\n\n- commit: %s\n- run: %s/%s/actions/runs/%s' \
+                  "${BUILT_SHA}" "${GITHUB_SERVER_URL}" "${REPO}" "${GITHUB_RUN_ID}")
+          ARGS=()
+          if [ "${INPUT_PRERELEASE:-false}" = "true" ]; then ARGS+=(--prerelease); fi
+
+          if gh release view "${RELEASE_TAG}" --repo "${REPO}" > /dev/null 2>&1; then
+            # 重跑同一次 dispatch 时 release 已存在：不重建，交给后面的校验与覆盖上传。
+            echo "release ${RELEASE_TAG} 已存在，跳过创建"
+          elif gh api "repos/${REPO}/git/ref/tags/${RELEASE_TAG}" > /dev/null 2>&1; then
+            # tag 已存在但没有 release：复用它，绝不移动。移动 tag 会让已下载旧产物的人
+            # 拿到对不上的源码；若它指向别的 commit，由下一步硬拦截，而不是悄悄改指向。
+            echo "tag ${RELEASE_TAG} 已存在，复用且不移动"
+            gh release create "${RELEASE_TAG}" --repo "${REPO}" \
+              --title "${RELEASE_TAG}" --notes "${NOTES}" "${ARGS[@]}"
+          else
+            gh release create "${RELEASE_TAG}" --repo "${REPO}" \
+              --target "${BUILT_SHA}" \
+              --title "${RELEASE_TAG}" --notes "${NOTES}" "${ARGS[@]}"
+          fi
+          echo "### Release 自动创建" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- tag: \`${RELEASE_TAG}\`" >> "${GITHUB_STEP_SUMMARY}"
+          echo "- target commit: \`${BUILT_SHA}\`" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Verify tag points at built commit
+        # 发布链路唯一的硬一致性约束：release 的 tag 必须指向本次构建的 commit。
+        # 不一致 = 挂着 vX.Y.Z 的名字卖别的源码产的固件，比发不出去严重得多，
+        # 因此在任何资产写入之前终止（含手建 release 的路径）。
+        run: |
+          set -euo pipefail
+          TAG_SHA=$(gh api "repos/${GITHUB_REPOSITORY}/commits/${RELEASE_TAG}" --jq '.sha')
+          if [ "${TAG_SHA}" != "${BUILT_SHA}" ]; then
+            echo "::error::tag ${RELEASE_TAG} 指向 ${TAG_SHA}，本次构建的是 ${BUILT_SHA}；产物与 tag 不对应，已拒绝上传"
+            exit 1
+          fi
+          echo "tag ↔ commit 一致：${RELEASE_TAG} -> ${TAG_SHA}"
+          echo "Tag commit: ${TAG_SHA}" >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Validate release context
         # 把静默失败变成带定位信息的显式失败：
         # tag 非空、release 真实存在、待上传文件非空。
+        # 自动路径下前一步刚建过 release，这里同时起到「创建确实生效」的作用。
         run: |
           set -euo pipefail
           if [ -z "${RELEASE_TAG}" ]; then
-            echo "::error::RELEASE_TAG 为空，事件上下文不是 release"; exit 1
+            echo "::error::RELEASE_TAG 为空，事件上下文不是 release 且未提供 release_tag"; exit 1
           fi
           if ! gh release view "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" --json tagName > /dev/null; then
             echo "::error::找不到 release ${RELEASE_TAG}"; exit 1
@@ -421,17 +512,30 @@ jobs:
           # 内置 GITHUB_TOKEN 即可，无需自建 PAT。
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./release-assets/*
-          tag: ${{ github.event.release.tag_name }}
+          # 用归一化后的 RELEASE_TAG（两条入口共用），不再直接取事件字段。
+          tag: ${{ env.RELEASE_TAG }}
           file_glob: true
+          # 必须显式开启：该 action 的 check_duplicates 默认为 true，
+          # 而 overwrite 默认 false —— 同名资产已存在时它调的是 core.setFailed，
+          # 即「重发同一个 tag 直接失败」。开 overwrite 后变为先删旧资产再传，
+          # 重发布才是幂等的（固件已上线后修正配置重发是常态）。
+          overwrite: true
 
       - name: Verify uploaded assets
-        # 回读 Release API，确认资产确实写入；否则明确失败而不是"看似成功"。
         run: |
           set -euo pipefail
-          COUNT=$(gh release view "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" --json assets --jq '.assets | length')
+          read -r COUNT DRAFT <<< "$(gh release view "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" \
+            --json assets,isDraft --jq '"\(.assets | length) \(.isDraft)"')"
           if [ "${COUNT}" -eq 0 ]; then
             echo "::error::release ${RELEASE_TAG} 中没有资产，上传未生效"; exit 1
           fi
-          echo "Verified ${COUNT} asset(s) on release ${RELEASE_TAG}"
-
-
+          LOCAL=$(find ./release-assets -type f | wc -l)
+          if [ "${COUNT}" -lt "${LOCAL}" ]; then
+            echo "::error::release 只有 ${COUNT} 个资产，本地待传 ${LOCAL} 个；上传不完整"; exit 1
+          fi
+          echo "Verified ${COUNT} asset(s) on release ${RELEASE_TAG} (local ${LOCAL}, draft=${DRAFT})"
+          {
+            echo "- assets: \`${COUNT}\`"
+            echo "- draft: \`${DRAFT}\`"
+            echo "- url: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${RELEASE_TAG}"
+          } >> "${GITHUB_STEP_SUMMARY}"
