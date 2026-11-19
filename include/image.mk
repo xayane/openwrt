@@ -461,6 +461,9 @@ define Device/Init
   SUPPORTED_DEVICES := $(subst _,$(comma),$(1))
   IMAGE_METADATA :=
 
+  ##@ Filesystems to build images for.
+  # Set FILESYSTEMS/<image> to build an image for only some of them.
+  ##
   FILESYSTEMS := $(TARGET_FILESYSTEMS)
 
   UBOOT_PATH :=  $(STAGING_DIR_IMAGE)/uboot-$(1)
@@ -675,8 +678,11 @@ define Device/Build/image
 
   .IGNORE: $(BIN_DIR)/$(call DEVICE_IMG_NAME,$(1),$(2))
 
-  $(BIN_DIR)/$(call DEVICE_IMG_NAME,$(1),$(2)).gz: $(KDIR)/tmp/$(call DEVICE_IMG_NAME,$(1),$(2))
+  $(KDIR)/tmp/$(call DEVICE_IMG_NAME,$(1),$(2)).gz: $(KDIR)/tmp/$(call DEVICE_IMG_NAME,$(1),$(2))
 	gzip -c -9n $$^ > $$@
+
+  $(BIN_DIR)/$(call DEVICE_IMG_NAME,$(1),$(2)).gz: $(KDIR)/tmp/$(call DEVICE_IMG_NAME,$(1),$(2)).gz
+	cp $$^ $$@
 
   $(BIN_DIR)/$(call DEVICE_IMG_NAME,$(1),$(2)): $(KDIR)/tmp/$(call DEVICE_IMG_NAME,$(1),$(2))
 	cp $$^ $$@
@@ -685,7 +691,7 @@ define Device/Build/image
 	@mkdir -p $$(shell dirname $$@)
 	DEVICE_ID="$(DEVICE_NAME)" \
 	SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH) \
-	FILE_NAME="$(DEVICE_IMG_NAME)" \
+	FILE_NAME="$$(notdir $$^)" \
 	FILE_DIR="$(KDIR)/tmp" \
 	FILE_TYPE=$(word 1,$(subst ., ,$(2))) \
 	FILE_FILESYSTEM="$(1)" \
@@ -778,7 +784,8 @@ define Device/Build
     $$(call Device/Build/compile,$$(compile),$(1))))
 
   $$(eval $$(foreach image,$$(IMAGES), \
-    $$(foreach fs,$$(filter $(TARGET_FILESYSTEMS),$$(FILESYSTEMS)), \
+    $$(foreach fs,$$(filter $(TARGET_FILESYSTEMS), \
+        $$(filter $$(or $$(FILESYSTEMS/$$(image)),$$(FILESYSTEMS)),$$(FILESYSTEMS))), \
       $$(call Device/Build/image,$$(fs),$$(image),$(1)))))
 
   $$(eval $$(foreach artifact,$$(ARTIFACTS), \
